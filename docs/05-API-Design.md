@@ -732,6 +732,167 @@ POST /agents/{agent_name}
 ```
 
 ---
+# 19. MCP APIs
+
+The Model Context Protocol (MCP) layer provides a standardized interface for AI agents to discover, execute, and manage external tools without directly interacting with third-party APIs.
+
+---
+
+## List Available Tools
+
+### Endpoint
+
+```
+GET /mcp/tools
+```
+
+### Description
+
+Returns all registered MCP tools available to the authenticated user.
+
+### Authentication
+
+JWT Required
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "github",
+      "description": "Access GitHub repositories and pull requests",
+      "status": "online"
+    },
+    {
+      "name": "gmail",
+      "description": "Read, summarize and send emails",
+      "status": "online"
+    },
+    {
+      "name": "calendar",
+      "description": "Manage Google Calendar events",
+      "status": "online"
+    },
+    {
+      "name": "browser",
+      "description": "Browser automation using Playwright",
+      "status": "online"
+    }
+  ]
+}
+```
+
+---
+
+## Execute Tool
+
+### Endpoint
+
+```
+POST /mcp/execute
+```
+
+### Description
+
+Executes an MCP tool on behalf of an AI agent.
+
+### Authentication
+
+JWT Required
+
+### Request Body
+
+```json
+{
+  "tool": "github",
+  "action": "list_repositories",
+  "parameters": {}
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Tool executed successfully.",
+  "data": {}
+}
+```
+
+---
+
+## Tool Status
+
+### Endpoint
+
+```
+GET /mcp/status
+```
+
+### Description
+
+Returns the current status of all registered MCP tools.
+
+### Authentication
+
+JWT Required
+
+---
+
+## Register Custom Tool
+
+### Endpoint
+
+```
+POST /mcp/register
+```
+
+### Description
+
+Registers a new MCP-compatible tool with the platform.
+
+### Authentication
+
+JWT Required
+
+---
+
+## Remove Tool
+
+### Endpoint
+
+```
+DELETE /mcp/{tool_name}
+```
+
+### Description
+
+Removes an MCP tool from the registry.
+
+### Authentication
+
+JWT Required
+
+---
+
+## MCP Health Check
+
+### Endpoint
+
+```
+GET /mcp/health
+```
+
+### Description
+
+Returns the health status of the MCP service and all connected tools.
+
+### Authentication
+
+JWT Required
 
 # 19. Health APIs
 
