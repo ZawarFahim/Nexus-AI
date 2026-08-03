@@ -109,5 +109,10 @@ class MCPRegistry:
         gmail_tool = GmailMCPTool()
         self.register_tool_instance(gmail_tool)
 
+        # Register n8n Tool
+        from app.services.mcp.n8n_tool import N8nMCPTool
+        n8n_tool = N8nMCPTool()
+        self.register_tool_instance(n8n_tool)
+
 # Singleton registry instance
 mcp_registry = MCPRegistry()

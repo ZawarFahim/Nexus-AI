@@ -1,0 +1,165 @@
+{
+  "name": "Smart Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smart-email",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "additionalFields": {
+          "q": "is:unread label:inbox"
+        }
+      },
+      "name": "Fetch Inbox",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simulate AI summarizing and generating a draft reply\nreturn {\n  summary: \"You have an urgent email from Boss regarding the project.\",\n  draft_reply: \"Hi Boss, I will get this done today.\",\n  thread_id: $json.id || \"12345\",\n  to: \"boss@example.com\"\n};"
+      },
+      "name": "Generate Draft (AI Placeholder)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "path": "confirm-email",
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "name": "Wait for Confirmation",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "subject": "Re: Project Update",
+        "message": "={{ $('Wait for Confirmation').item.json.body.approved_reply || $('Generate Draft (AI Placeholder)').item.json.draft_reply }}",
+        "additionalFields": {
+          "to": "={{ $('Generate Draft (AI Placeholder)').item.json.to }}",
+          "threadId": "={{ $('Generate Draft (AI Placeholder)').item.json.thread_id }}"
+        }
+      },
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  success: true,\n  message: \"Email sent successfully.\"\n};"
+      },
+      "name": "Final Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Inbox": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft (AI Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft (AI Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Wait for Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply": {
+      "main": [
+        [
+          {
+            "node": "Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {}
+}
