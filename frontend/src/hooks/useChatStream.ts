@@ -19,8 +19,14 @@ export function useChatStream() {
     }
   }, [messages, isTyping]);
 
-  const sendMessage = async (content: string, token: string) => {
+  const sendMessage = async (content: string) => {
     if (!content.trim()) return;
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.error("No access token found");
+      return;
+    }
 
     // Optimistically add user message
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content };

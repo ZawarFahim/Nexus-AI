@@ -11,11 +11,9 @@ import { motion } from 'framer-motion';
 
 export const ChatInterface = () => {
   const { messages, isTyping, sendMessage, scrollRef } = useChatStream();
-
+  
   const handleSend = (text: string) => {
-    // In a real app, retrieve JWT from auth store/provider
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || 'dev_token' : '';
-    sendMessage(text, token);
+    sendMessage(text);
   };
 
   return (
