@@ -10,6 +10,14 @@ class Settings(BaseSettings):
     
     # Database Configuration
     DATABASE_URL: str = "postgresql+asyncpg://nexus_user:nexus_pass@localhost:5432/nexus_db"
+    
+    # Redis Configuration
+    REDIS_URL: str = "redis://localhost:6379/0"
+    
+    # Qdrant Configuration
+    QDRANT_URL: str = "http://localhost:6333"
+
+
 
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True)
