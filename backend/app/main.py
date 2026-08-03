@@ -29,11 +29,16 @@ async def lifespan(app: FastAPI):
     await qdrant_manager.disconnect()
     await redis_manager.disconnect()
 
+from starlette.middleware.sessions import SessionMiddleware
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan
 )
+
+# Authlib requires session middleware to store the OAuth state
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 # CORS configuration
 if settings.CORS_ORIGINS:

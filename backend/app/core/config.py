@@ -17,6 +17,20 @@ class Settings(BaseSettings):
     # Qdrant Configuration
     QDRANT_URL: str = "http://localhost:6333"
 
+    # JWT Authentication Configuration
+    SECRET_KEY: str = "supersecretkey_please_change_in_production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    
+    # OAuth and Security
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    # Fernet encryption key must be 32 url-safe base64-encoded bytes. 
+    # e.g. generated via cryptography.fernet.Fernet.generate_key()
+    ENCRYPTION_KEY: str = "xU22r5lXq8z4G_qj4G8f1cZ-Qc2Y3G_kZ9xV5pL8rX8=" 
+
+
 
 
     
