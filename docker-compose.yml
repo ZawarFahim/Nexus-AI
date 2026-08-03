@@ -8,6 +8,8 @@ services:
     container_name: nexus_backend
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://nexus_user:nexus_pass@postgres:5432/nexus_db
       - REDIS_URL=redis://redis:6379/0
