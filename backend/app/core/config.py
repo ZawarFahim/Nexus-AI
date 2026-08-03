@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # AI Configuration
     GEMINI_API_KEY: str = ""
 
+    # Tools Configuration
+    GITHUB_ACCESS_TOKEN: str = ""
+
 
 
 
