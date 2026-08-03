@@ -1,0 +1,73 @@
+# -----------------------------
+# General
+# -----------------------------
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# -----------------------------
+# Environments & Secrets
+# -----------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# -----------------------------
+# Frontend (Next.js / Node)
+# -----------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+
+# Vercel
+.vercel
+
+# -----------------------------
+# Backend (Python / FastAPI)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# uv
+uv.lock
+
+# -----------------------------
+# Databases & Volumes (Docker)
+# -----------------------------
+pgdata/
+redisdata/
+qdrantdata/
+n8ndata/
