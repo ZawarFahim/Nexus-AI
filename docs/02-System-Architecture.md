@@ -44,7 +44,6 @@ The architecture follows these principles:
 
 # 3. High Level Architecture
 
-```text
                     User
                       │
           ┌───────────┴───────────┐
@@ -64,27 +63,20 @@ The architecture follows these principles:
                       │
           Multi-Agent Coordinator
                       │
-     ┌────────┬────────┬────────┬────────┐
-     │        │        │        │        │
- Email   GitHub   Calendar  Browser  Memory
- Agent    Agent     Agent     Agent    Agent
-     │        │        │        │        │
-     └────────┴────────┴────────┴────────┘
+              MCP Tool Layer
                       │
              Workflow Manager
+                  (n8n)
                       │
-                     n8n
-                      │
-     ┌──────────┬───────────┬────────────┐
- Gmail API  GitHub API  Google Calendar
- Browser    File System   Database
+      ┌────────┬────────┬────────┐
+      │        │        │        │
+   GitHub   Gmail   Calendar  Browser
+      │        │        │        │
+      └────────┴────────┴────────┘
                       │
               Response Builder
                       │
-              Streaming Response
-                      │
-                     User
-```
+                    User
 
 ---
 
@@ -178,6 +170,31 @@ Agents never communicate directly with each other.
 Communication always occurs through the Agent Coordinator.
 
 ---
+
+## MCP Tool Layer
+
+The Model Context Protocol (MCP) layer acts as a standardized interface between AI agents and external tools.
+
+Instead of allowing agents to directly call third-party APIs, every tool is exposed through an MCP-compatible interface.
+
+Responsibilities:
+
+- Standardize tool communication
+- Register available tools
+- Handle permissions
+- Validate tool requests
+- Normalize responses
+- Simplify future integrations
+
+Example Tools
+
+- GitHub MCP Server
+- Gmail MCP Server
+- Calendar MCP Server
+- Browser MCP Server
+- Filesystem MCP Server
+
+This abstraction enables Nexus AI to support additional tools without modifying the planner or agent implementations.
 
 ## Workflow Layer
 
