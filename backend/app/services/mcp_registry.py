@@ -114,5 +114,10 @@ class MCPRegistry:
         n8n_tool = N8nMCPTool()
         self.register_tool_instance(n8n_tool)
 
+        # Register Memory Tool
+        from app.services.mcp.memory_tool import MemoryMCPTool
+        memory_tool = MemoryMCPTool()
+        self.register_tool_instance(memory_tool)
+
 # Singleton registry instance
 mcp_registry = MCPRegistry()
