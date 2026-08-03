@@ -328,6 +328,28 @@ Workflow automation platform.
 
 ---
 
+# MCP (Model Context Protocol)
+
+## Purpose
+
+Acts as a standardized communication layer between AI agents and external tools.
+
+## Responsibilities
+
+- Tool discovery
+- Tool execution
+- Permission handling
+- Request validation
+- Response normalization
+
+## Why MCP?
+
+- Industry standard for AI tools
+- Modular architecture
+- Easy tool expansion
+- Future-proof design
+- Reduces agent complexity
+
 # 6. Browser Automation
 
 ## Playwright
