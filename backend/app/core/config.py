@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # e.g. generated via cryptography.fernet.Fernet.generate_key()
     ENCRYPTION_KEY: str = "xU22r5lXq8z4G_qj4G8f1cZ-Qc2Y3G_kZ9xV5pL8rX8=" 
 
+    # AI Configuration
+    GEMINI_API_KEY: str = ""
+
+
 
 
 
