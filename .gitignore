@@ -71,3 +71,7 @@ pgdata/
 redisdata/
 qdrantdata/
 n8ndata/
+
+# Local Databases
+*.db
+*.sqlite3

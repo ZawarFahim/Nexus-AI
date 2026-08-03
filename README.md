@@ -2,6 +2,29 @@
 
 Welcome to the Nexus AI project repository.
 
+## Tech Stack
+
+*   **Backend:** FastAPI, Python 3.12, uv, SQLAlchemy 2.0 (async), Alembic
+*   **Frontend:** Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui, Zustand
+*   **Databases:** PostgreSQL (Relational), Redis (Cache/State), Qdrant (Vectors)
+*   **Workflow Engine:** n8n
+
+## Database Migrations
+
+The backend uses SQLAlchemy 2.0 with asynchronous drivers (`asyncpg`) and Alembic for migrations.
+
+To generate a new migration after modifying models:
+```bash
+cd backend
+alembic revision --autogenerate -m "description of changes"
+```
+
+To apply migrations to the database:
+```bash
+cd backend
+alembic upgrade head
+```
+
 ## Repository Structure
 
 The project is organized as follows:
