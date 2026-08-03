@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, auth, oauth, planner, mcp, coordinator, chat, memory
+from app.api.v1.endpoints import health, auth, oauth, planner, mcp, coordinator, chat, memory, voice
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -10,6 +10,7 @@ api_router.include_router(mcp.router, prefix="/mcp", tags=["mcp"])
 api_router.include_router(coordinator.router, prefix="/coordinator", tags=["coordinator"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 api_router.include_router(memory.router, prefix="/memory", tags=["memory"])
+api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 
 
 

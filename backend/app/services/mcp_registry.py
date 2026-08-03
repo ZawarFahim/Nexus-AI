@@ -119,5 +119,10 @@ class MCPRegistry:
         memory_tool = MemoryMCPTool()
         self.register_tool_instance(memory_tool)
 
+        # Register Browser Tool
+        from app.services.mcp.browser_tool import BrowserMCPTool
+        browser_tool = BrowserMCPTool()
+        self.register_tool_instance(browser_tool)
+
 # Singleton registry instance
 mcp_registry = MCPRegistry()
