@@ -9,6 +9,43 @@ Welcome to the Nexus AI project repository.
 *   **Databases:** PostgreSQL (Relational), Redis (Cache/State), Qdrant (Vectors)
 *   **Workflow Engine:** n8n
 
+## Quick Start
+
+### 1. Prerequisites
+- Python 3.12+
+- Node.js 18+
+- Docker & Docker Compose
+- N8N Instance (Local or Cloud)
+
+### 2. Backend Setup
+```bash
+cd backend
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+# source venv/bin/activate
+
+pip install -r requirements.txt
+
+# Create your environment file and fill in API keys
+cp .env.example .env
+
+# Start the required databases (Postgres, Redis, Qdrant)
+docker-compose up -d
+
+# Run migrations and start the server
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ## Database Migrations
 
 The backend uses SQLAlchemy 2.0 with asynchronous drivers (`asyncpg`) and Alembic for migrations.
