@@ -22,7 +22,7 @@ class BrowserMCPTool(BaseMCPTool):
         self._playwright = None
         self._browser: Optional[Browser] = None
         # Use a background task to initialize the playwright engine
-        asyncio.create_task(self._init_browser())
+        # asyncio.create_task(self._init_browser())
 
     async def _init_browser(self):
         try:

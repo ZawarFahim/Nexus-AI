@@ -7,7 +7,7 @@ from app.api import deps
 from app.models.user import User
 from app.services.voice_service import voice_service
 from app.services.chat_service import chat_service
-from app.schemas.chat import ChatMessage
+from app.schemas.chat import ChatRequest
 
 router = APIRouter()
 
@@ -69,7 +69,7 @@ async def voice_chat(
             raise HTTPException(status_code=400, detail="Could not understand audio.")
             
         # 2. Get AI Response
-        msg_req = ChatMessage(message=user_text, conversation_id=conversation_id)
+        msg_req = ChatRequest(message=user_text, conversation_id=conversation_id)
         
         # We need the full text to synthesize, so we consume the chat stream
         # This adds latency before the first audio byte is sent. 

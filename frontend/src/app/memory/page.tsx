@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MemorySearch } from '@/components/memory/MemorySearch';
 import { MemoryTimeline } from '@/components/memory/MemoryTimeline';
 import { MemoryData } from '@/components/memory/MemoryCard';

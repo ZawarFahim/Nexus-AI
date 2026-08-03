@@ -14,8 +14,14 @@ COPY pyproject.toml ./
 # Install dependencies using uv
 RUN uv pip install --system -r pyproject.toml
 
+# Install Playwright OS dependencies and Chromium
+RUN playwright install-deps chromium
+RUN playwright install chromium
+
 # Copy application code
 COPY app /app/app
+COPY alembic.ini ./
+COPY alembic /app/alembic
 
 # Expose port
 EXPOSE 8000

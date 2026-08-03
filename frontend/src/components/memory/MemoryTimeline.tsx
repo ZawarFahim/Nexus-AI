@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { MemoryData, MemoryCard } from './MemoryCard';
 import { Skeleton } from '@/components/ui/skeleton';

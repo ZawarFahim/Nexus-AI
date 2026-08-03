@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://nexus_user:nexus_pass@postgres:5432/nexus_db
+      - DATABASE_URL=postgresql+asyncpg://nexus_user:nexus_pass@postgres:5432/nexus_db
       - REDIS_URL=redis://redis:6379/0
       - QDRANT_URL=http://qdrant:6333
       - N8N_WEBHOOK_URL=http://n8n:5678

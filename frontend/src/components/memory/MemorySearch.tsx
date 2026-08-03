@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -19,7 +21,7 @@ export const MemorySearch: React.FC<MemorySearchProps> = ({ onSearch, onFilterCh
           onChange={(e) => onSearch(e.target.value)}
         />
       </div>
-      <Select onValueChange={onFilterChange} defaultValue="all">
+      <Select onValueChange={(val) => onFilterChange(val || "all")} defaultValue="all">
         <SelectTrigger className="w-full md:w-[180px] bg-background/50 backdrop-blur-sm">
           <SelectValue placeholder="Category" />
         </SelectTrigger>

@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 from app.services.mcp.base_tool import BaseMCPTool
-from app.schemas.mcp import ToolDefinition
+from app.schemas.mcp import ToolDefinition, ToolParameter
 from app.models.user import User
 from app.services.n8n_client import n8n_client
 from app.schemas.n8n import N8nWebhookPayload

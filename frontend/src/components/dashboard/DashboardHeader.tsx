@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Bot, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
