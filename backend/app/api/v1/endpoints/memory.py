@@ -25,6 +25,21 @@ async def create_memory(
             detail=f"Failed to save memory: {str(e)}"
         )
 
+@router.get("/", response_model=List[MemoryResponse])
+async def get_memories(
+    current_user: User = Depends(deps.get_current_user)
+):
+    """
+    Fetch the most recent memories for the user.
+    """
+    try:
+        return await memory_service.get_memories(current_user)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch memories: {str(e)}"
+        )
+
 @router.post("/search", response_model=List[MemoryResponse])
 async def search_memories(
     request: MemorySearchRequest,

@@ -26,23 +26,23 @@ const items = [
     icon: MessageSquare,
   },
   {
-    title: "Workflows (Soon)",
-    url: "#",
+    title: "Workflows",
+    url: "/workflows",
     icon: Briefcase,
   },
   {
-    title: "Memory (Soon)",
-    url: "#",
+    title: "Memory",
+    url: "/memory",
     icon: Inbox,
   },
   {
-    title: "Files (Soon)",
-    url: "#",
+    title: "Files",
+    url: "/files",
     icon: FileText,
   },
   {
-    title: "Settings (Soon)",
-    url: "#",
+    title: "Settings",
+    url: "/settings",
     icon: Settings,
   },
 ]

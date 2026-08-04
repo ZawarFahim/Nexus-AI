@@ -177,4 +177,12 @@ class MemoryService:
             
             return [MemoryResponse.model_validate(m) for m in ordered_memories]
 
+    async def get_memories(self, user: User, limit: int = 50) -> list[MemoryResponse]:
+        """Fetch the most recent memories for a user."""
+        async with AsyncSessionLocal() as db:
+            stmt = select(Memory).where(Memory.user_id == user.id).order_by(Memory.created_at.desc()).limit(limit)
+            result = await db.execute(stmt)
+            memories = result.scalars().all()
+            return [MemoryResponse.model_validate(m) for m in memories]
+
 memory_service = MemoryService()

@@ -1,107 +1,126 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { MemorySearch } from '@/components/memory/MemorySearch';
-import { MemoryTimeline } from '@/components/memory/MemoryTimeline';
-import { MemoryData } from '@/components/memory/MemoryCard';
-import { BrainCircuit } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BrainCircuit, Loader2, Sparkles, Tag, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
-// Highly realistic mock data for UI construction
-const INITIAL_MEMORIES: MemoryData[] = [
-  {
-    id: '1',
-    content: 'The user prefers code snippets to be written in TypeScript rather than standard JavaScript.',
-    category: 'Preferences',
-    importance: 8.5,
-    date: 'August 1, 2026'
-  },
-  {
-    id: '2',
-    content: 'The user works as a Senior AI Architect at a tech startup.',
-    category: 'Work',
-    importance: 9.0,
-    date: 'August 2, 2026'
-  },
-  {
-    id: '3',
-    content: 'The user explicitly requested that all UI components must follow a premium, glassmorphic Web 3.0 aesthetic.',
-    category: 'Preferences',
-    importance: 9.5,
-    date: 'August 3, 2026'
-  },
-  {
-    id: '4',
-    content: 'The user is learning about vector databases, specifically Qdrant.',
-    category: 'Personal',
-    importance: 6.0,
-    date: 'August 3, 2026'
-  }
-];
+interface Memory {
+  id?: string;
+  title: string;
+  content: string;
+  category: string;
+  importance_score: number;
+  created_at: string;
+}
 
 export default function MemoryPage() {
+  const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [memories, setMemories] = useState<MemoryData[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMemories(INITIAL_MEMORIES);
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+    const fetchMemories = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch('http://localhost:8000/api/v1/memory/', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch memories");
+        }
+
+        const data = await response.json();
+        setMemories(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMemories();
   }, []);
 
-  const handleDelete = (id: string) => {
-    // In a real app, this would be an API call
-    setMemories(prev => prev.filter(m => m.id !== id));
-  };
-
-  const handleEdit = (id: string) => {
-    // Placeholder for opening an edit modal
-    console.log("Edit memory:", id);
-  };
-
-  // Filter logic
-  const filteredMemories = memories.filter(m => {
-    const matchesSearch = m.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || m.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
-
   return (
-    <div className="flex-1 overflow-y-auto bg-transparent min-h-screen">
-      <div className="container max-w-4xl mx-auto p-6 md:p-10">
-        
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/10 rounded-2xl border border-primary/20 shadow-inner">
-              <BrainCircuit className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Long-Term Memory</h1>
+    <div className="flex-1 overflow-y-auto bg-muted/20">
+      <div className="container max-w-7xl mx-auto p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <BrainCircuit className="w-8 h-8 text-primary" />
+              Long-Term Memory
+            </h1>
+            <p className="text-muted-foreground mt-1">Facts, preferences, and context securely saved for your AI.</p>
           </div>
-          <p className="text-muted-foreground text-lg ml-1 mt-3">
-            Review and manage the facts, preferences, and context Nexus AI has learned about you.
-          </p>
+          <Button className="shrink-0 gap-2 shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" />
+            Add Memory
+          </Button>
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="sticky top-0 z-10 py-4 bg-background/60 backdrop-blur-2xl border-b border-border/50 mb-8 -mx-6 px-6 md:-mx-10 md:px-10 shadow-sm">
-          <MemorySearch 
-            onSearch={setSearchQuery} 
-            onFilterChange={setCategoryFilter} 
-          />
-        </div>
+        {error && (
+          <div className="p-4 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20 mb-6 text-sm">
+            {error}
+          </div>
+        )}
 
-        {/* Timeline Content */}
-        <MemoryTimeline 
-          memories={filteredMemories} 
-          onDelete={handleDelete} 
-          onEdit={handleEdit} 
-          loading={loading}
-        />
-        
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin mb-4" />
+            <p>Accessing memory vault...</p>
+          </div>
+        ) : memories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-muted-foreground/20 rounded-xl bg-muted/10">
+            <BrainCircuit className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground">No memories found</h3>
+            <p className="text-sm text-muted-foreground mt-1 text-center max-w-md">
+              Your memory vault is empty. Try asking the AI to "remember that I prefer dark mode" or use the Add Memory button.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {memories.map((memory, idx) => (
+              <motion.div
+                key={memory.id || idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card className="h-full bg-card/60 backdrop-blur-xl border-border/50 hover:border-primary/30 transition-colors">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20">
+                        <Tag className="w-3 h-3" />
+                        {memory.category || 'General'}
+                      </Badge>
+                      <div className="flex items-center text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {memory.importance_score.toFixed(1)}
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg">{memory.title || "Untitled Memory"}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {memory.content}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60">
+                      Saved {new Date(memory.created_at).toLocaleDateString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
