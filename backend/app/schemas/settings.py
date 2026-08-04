@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+import uuid
 from typing import Optional
 
 class SettingsBase(BaseModel):
@@ -15,8 +16,7 @@ class SettingsUpdate(SettingsBase):
     pass
 
 class SettingsInDB(SettingsBase):
-    id: str
-    user_id: str
+    id: uuid.UUID
+    user_id: uuid.UUID
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
