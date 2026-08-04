@@ -10,7 +10,7 @@ import { Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const ChatInterface = () => {
-  const { messages, isTyping, sendMessage, scrollRef } = useChatStream();
+  const { messages, isTyping, sendMessage, sendAudioMessage, scrollRef } = useChatStream();
   
   const handleSend = (text: string) => {
     sendMessage(text);
@@ -52,7 +52,7 @@ export const ChatInterface = () => {
       </ScrollArea>
 
       <div className="pt-4 sticky bottom-0 bg-background/80 backdrop-blur-xl">
-        <ChatInput onSend={handleSend} disabled={isTyping} />
+        <ChatInput onSend={handleSend} onAudioSend={sendAudioMessage} disabled={isTyping} />
         <div className="text-center mt-2 text-xs text-muted-foreground">
           AI generated content may be inaccurate.
         </div>

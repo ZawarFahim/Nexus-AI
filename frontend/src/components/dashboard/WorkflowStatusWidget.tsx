@@ -15,14 +15,35 @@ const MOCK_WORKFLOWS = [
 
 export const WorkflowStatusWidget = () => {
   const [loading, setLoading] = useState(true);
-  const [workflows, setWorkflows] = useState<typeof MOCK_WORKFLOWS>([]);
+  const [workflows, setWorkflows] = useState<any[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setWorkflows(MOCK_WORKFLOWS);
-      setLoading(false);
-    }, 1800);
-    return () => clearTimeout(timer);
+    const fetchWorkflows = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/dashboard/workflows', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWorkflows(data.map((w: any) => ({
+            id: w.id, 
+            name: w.name, 
+            status: w.status, 
+            time: new Date(w.time).toLocaleString(),
+            color: w.status === 'Completed' ? 'text-green-500 bg-green-500/10' : 
+                   w.status === 'Failed' ? 'text-destructive bg-destructive/10' : 
+                   'text-blue-500 bg-blue-500/10'
+          })));
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWorkflows();
   }, []);
 
   return (

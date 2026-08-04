@@ -124,5 +124,10 @@ class MCPRegistry:
         browser_tool = BrowserMCPTool()
         self.register_tool_instance(browser_tool)
 
+        # Register Calendar Tool
+        from app.services.mcp.calendar_tool import CalendarMCPTool
+        calendar_tool = CalendarMCPTool()
+        self.register_tool_instance(calendar_tool)
+
 # Singleton registry instance
 mcp_registry = MCPRegistry()

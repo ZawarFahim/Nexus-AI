@@ -5,5 +5,6 @@ from app.models.memory import Memory, Embedding
 from app.models.workflow import Workflow, WorkflowLog
 from app.models.task import Task
 from app.models.settings import Settings, OAuthAccount, Notification, ActivityLog
+from app.models.file import FileMetadata
 
 # This ensures all models are imported and registered with the Base metadata.

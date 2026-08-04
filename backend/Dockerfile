@@ -23,6 +23,12 @@ COPY app /app/app
 COPY alembic.ini ./
 COPY alembic /app/alembic
 
+# Download Piper Voice model
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /app/models
+RUN wget -qO /app/models/en_US-lessac-medium.onnx "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx?download=true"
+RUN wget -qO /app/models/en_US-lessac-medium.onnx.json "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json?download=true"
+
 # Expose port
 EXPOSE 8000
 

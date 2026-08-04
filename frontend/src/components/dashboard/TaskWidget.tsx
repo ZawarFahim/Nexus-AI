@@ -18,14 +18,27 @@ const MOCK_TASKS = [
 
 export const TaskWidget = () => {
   const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState<typeof MOCK_TASKS>([]);
+  const [tasks, setTasks] = useState<{id: string, title: string, priority: string, status: string, completed: boolean}[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setTasks(MOCK_TASKS);
-      setLoading(false);
-    }, 1500); // Simulate network latency for skeleton demo
-    return () => clearTimeout(timer);
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/dashboard/tasks', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTasks(data.map((t: any) => ({...t, completed: t.status === 'Completed'})));
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
   }, []);
 
   const completedCount = tasks.filter(t => t.completed).length;

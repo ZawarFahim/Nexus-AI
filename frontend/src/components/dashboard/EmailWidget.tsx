@@ -1,16 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-const MOCK_EMAILS = [
-  { id: 1, sender: 'Alex Johnson', subject: 'Re: Q3 Roadmap update', time: '10:42 AM', unread: true },
-  { id: 2, sender: 'AWS Notifications', subject: 'Your AWS invoice is ready', time: 'Yesterday', unread: true },
-  { id: 3, sender: 'Sarah Smith', subject: 'Feedback on the new UI', time: 'Yesterday', unread: false },
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const EmailWidget = () => {
-  const unreadCount = MOCK_EMAILS.filter(e => e.unread).length;
+  const [loading, setLoading] = useState(true);
+  const [emails, setEmails] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchEmails = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/dashboard/emails', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // API returns simplified data for MVP
+          setEmails(data.map((e: any, i: number) => ({
+            id: e.id,
+            sender: `Sender ${i+1}`,
+            subject: e.snippet.substring(0, 50) + '...',
+            time: 'Recently',
+            unread: true
+          })));
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEmails();
+  }, []);
+
+  const unreadCount = emails.filter(e => e.unread).length;
 
   return (
     <Card className="col-span-1 md:col-span-2 shadow-sm">
@@ -24,24 +50,44 @@ export const EmailWidget = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-0 divide-y">
-          {MOCK_EMAILS.map((email) => (
-            <div key={email.id} className="py-3 flex items-center justify-between group cursor-pointer">
-              <div>
-                <p className={`text-sm ${email.unread ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
-                  {email.sender}
-                </p>
-                <p className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-[400px]">
-                  {email.subject}
-                </p>
+        {loading ? (
+          <div className="space-y-4 py-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[150px]" />
+                  <Skeleton className="h-4 w-[250px]" />
+                </div>
+                <Skeleton className="h-4 w-[50px]" />
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-muted-foreground">{email.time}</span>
-                <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-0 divide-y">
+            {emails.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No recent emails found.
               </div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              emails.map((email) => (
+                <div key={email.id} className="py-3 flex items-center justify-between group cursor-pointer">
+                  <div>
+                    <p className={`text-sm ${email.unread ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                      {email.sender}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-[400px]">
+                      {email.subject}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-muted-foreground">{email.time}</span>
+                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

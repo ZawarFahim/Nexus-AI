@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, Video } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Video } from 'lucide-react';
 
 const MOCK_EVENTS = [
@@ -9,6 +11,30 @@ const MOCK_EVENTS = [
 ];
 
 export const CalendarWidget = () => {
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCalendar = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/dashboard/calendar', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCalendar();
+  }, []);
+
   return (
     <Card className="col-span-1 shadow-sm">
       <CardHeader className="pb-2">
@@ -18,20 +44,40 @@ export const CalendarWidget = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 mt-2">
-          {MOCK_EVENTS.map((event) => (
-            <div key={event.id} className="flex gap-4 items-start relative pl-2">
-              <div className="absolute left-0 top-1 bottom-0 w-0.5 bg-primary rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold">{event.title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-muted-foreground">{event.time}</span>
-                  {event.type === 'video' && <Video className="h-3 w-3 text-muted-foreground" />}
+        {loading ? (
+          <div className="space-y-4 mt-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-4 items-start relative pl-2">
+                <div className="absolute left-0 top-1 bottom-0 w-0.5 bg-primary/20 rounded-full"></div>
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4 mt-2">
+            {events.length === 0 ? (
+              <div className="text-center text-sm text-muted-foreground py-4">No events today.</div>
+            ) : (
+              events.map((event) => (
+                <div key={event.id} className="flex gap-4 items-start relative pl-2">
+                  <div className="absolute left-0 top-1 bottom-0 w-0.5 bg-primary rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{event.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                      {event.type === 'video' && <Video className="h-3 w-3 text-muted-foreground" />}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -50,6 +50,21 @@ async def upload_file(
         metadata={"user_id": str(current_user.id)}
     )
 
+    # Save to Database
+    from app.models.file import FileMetadata
+    from app.db.session import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        new_file = FileMetadata(
+            user_id=current_user.id,
+            filename=file.filename,
+            file_type=file.content_type,
+            size_bytes=len(content),
+            qdrant_document_id=document_id
+        )
+        db.add(new_file)
+        await db.commit()
+
     return FileResponse(
         document_id=document_id,
         filename=file.filename,

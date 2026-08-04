@@ -19,7 +19,37 @@ export function useChatStream() {
     }
   }, [messages, isTyping]);
 
-  const sendMessage = async (content: string) => {
+  const synthesizeAndPlay = async (text: string, token: string) => {
+    try {
+      // Clean up markdown formatting for TTS
+      const cleanText = text.replace(/[*#`]/g, '').trim();
+      if (!cleanText) return;
+      
+      const response = await fetch('http://localhost:8000/api/v1/voice/synthesize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: cleanText })
+      });
+      
+      if (!response.ok) throw new Error("TTS failed");
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play();
+      
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+      };
+    } catch (e) {
+      console.error("Failed to synthesize speech:", e);
+    }
+  };
+
+  const sendMessage = async (content: string, options?: { synthesizeResponse?: boolean }) => {
     if (!content.trim()) return;
 
     const token = localStorage.getItem('access_token');
@@ -28,14 +58,14 @@ export function useChatStream() {
       return;
     }
 
-    // Optimistically add user message
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content };
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    // Initialize AI message placeholder
     const aiMessageId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, { id: aiMessageId, role: 'assistant', content: '' }]);
+
+    let fullAiContent = "";
 
     try {
       const response = await fetch('http://localhost:8000/api/v1/chat/stream', {
@@ -61,7 +91,6 @@ export function useChatStream() {
         done = doneReading;
         const chunkValue = decoder.decode(value, { stream: true });
 
-        // SSE chunks are separated by double newlines
         const events = chunkValue.split('\n\n');
         for (const event of events) {
           if (event.startsWith('data: ')) {
@@ -84,7 +113,7 @@ export function useChatStream() {
               }
 
               if (data.chunk) {
-                // Update the AI message with new chunk
+                fullAiContent += data.chunk;
                 setMessages(prev => 
                   prev.map(msg => 
                     msg.id === aiMessageId 
@@ -94,16 +123,50 @@ export function useChatStream() {
                 );
               }
             } catch (e) {
-              // Sometimes chunks get split exactly at the JSON boundary, handling partial JSON is complex.
-              // For simplicity in this demo, we assume chunks contain complete JSON objects.
               console.warn("Failed to parse SSE chunk:", e);
             }
           }
         }
       }
+      
+      // If voice mode is active, read the response out loud
+      if (options?.synthesizeResponse && fullAiContent.trim()) {
+        await synthesizeAndPlay(fullAiContent, token);
+      }
+      
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const sendAudioMessage = async (audioBlob: Blob) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    try {
+      setIsTyping(true); // show typing while transcribing
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      const response = await fetch('http://localhost:8000/api/v1/voice/transcribe', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Transcription failed");
+      
+      const data = await response.json();
+      if (data.text) {
+        // Send the transcribed text and request TTS playback
+        await sendMessage(data.text, { synthesizeResponse: true });
+      }
+    } catch (error) {
+      console.error("Failed to transcribe audio:", error);
       setIsTyping(false);
     }
   };
@@ -112,6 +175,7 @@ export function useChatStream() {
     messages,
     isTyping,
     sendMessage,
+    sendAudioMessage,
     scrollRef
   };
 }
