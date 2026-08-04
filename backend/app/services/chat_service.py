@@ -41,11 +41,13 @@ class ChatService:
             conv = Conversation(user_id=user.id)
             db.add(conv)
             await db.commit()
-            await db.refresh(conv)
             
-            # Need to initialize messages since it's fresh
-            conv.messages = []
-            return conv
+            # Re-fetch with selectinload to initialize relationships
+            stmt = select(Conversation).options(selectinload(Conversation.messages)).where(
+                Conversation.id == conv.id
+            )
+            result = await db.execute(stmt)
+            return result.scalars().first()
 
     async def _save_messages(self, conversation_id: uuid.UUID, user_message: str, ai_message: str):
         """Save the interaction to the database securely."""
@@ -88,61 +90,132 @@ class ChatService:
         except Exception as e:
             logger.error(f"Failed to generate title: {e}")
 
+    def _get_gemini_tools(self) -> list[types.Tool]:
+        """Convert MCP Registry tools into Gemini Tools."""
+        from app.services.mcp_registry import mcp_registry
+        mcp_tools = mcp_registry.get_all_tools()
+        
+        declarations = []
+        for t in mcp_tools:
+            properties = {}
+            required = []
+            for p in t.parameters:
+                type_map = {
+                    "string": types.Type.STRING,
+                    "integer": types.Type.INTEGER,
+                    "boolean": types.Type.BOOLEAN,
+                    "number": types.Type.NUMBER,
+                    "array": types.Type.ARRAY,
+                    "object": types.Type.OBJECT
+                }
+                gemini_type = type_map.get(p.type, types.Type.STRING)
+                properties[p.name] = types.Schema(type=gemini_type, description=p.description)
+                if p.required:
+                    required.append(p.name)
+                    
+            decl = types.FunctionDeclaration(
+                name=t.name.replace(".", "_"),
+                description=t.description,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
+                    properties=properties,
+                    required=required if required else None
+                ) if properties else None
+            )
+            declarations.append(decl)
+            
+        if not declarations:
+            return None
+        return [types.Tool(function_declarations=declarations)]
+
     async def chat_stream(self, request: ChatRequest, user: User) -> AsyncGenerator[str, None]:
-        """
-        The main chat entry point. It yields Server-Sent Events (SSE).
-        It checks if the request requires the Agent Coordinator, or just standard chat.
-        For simplicity, if we want agents, we can route it through the coordinator.
-        But the requirement is to 'Return markdown, streaming responses'.
-        Since the coordinator isn't natively streaming yet, we will stream the standard LLM response here,
-        and if it's a complex task, we could trigger the coordinator.
-        For now, this handles pure streaming LLM with context.
-        """
         if not self.client:
             yield f"data: {json.dumps({'error': 'Gemini API Key missing'})}\n\n"
             return
 
-        # Fetch or create conversation history
         conv = await self._get_or_create_conversation(user, request.conversation_id)
-        
-        # Build prompt context
-        history = []
-        for msg in conv.messages:
-            history.append(f"{msg.role}: {msg.content}")
-            
-        history_text = "\n".join(history)
         
         system_instruction = (
             "You are Nexus AI, a helpful, intelligent assistant. "
+            "You have access to backend tools to search files, memory, github, etc. "
+            "Always use the appropriate tools to answer user questions when possible. "
             "You must format all your responses in standard Markdown. "
             "Be concise, clear, and highly capable."
         )
-        
-        prompt = f"Chat History:\n{history_text}\n\nUser: {request.message}\nAssistant:"
+
+        contents = []
+        for msg in conv.messages:
+            contents.append(types.Content(role="model" if msg.role == "assistant" else "user", parts=[types.Part.from_text(text=msg.content)]))
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=request.message)]))
+
+        gemini_tools = self._get_gemini_tools()
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            tools=gemini_tools,
+            temperature=0.2
+        )
 
         ai_full_response = ""
         
         try:
-            # Yield initial metadata (so frontend gets conversation ID immediately)
             meta = json.dumps({"conversation_id": str(conv.id), "event": "start"})
             yield f"data: {meta}\n\n"
             
             response_stream = self.client.models.generate_content_stream(
                 model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction
-                )
+                contents=contents,
+                config=config
             )
+            
+            function_calls = []
+            model_content_parts = []
             
             for chunk in response_stream:
                 if chunk.text:
                     ai_full_response += chunk.text
-                    # Server-Sent Event format
+                    model_content_parts.append(types.Part.from_text(text=chunk.text))
                     payload = json.dumps({"chunk": chunk.text, "conversation_id": str(conv.id)})
                     yield f"data: {payload}\n\n"
+                if chunk.function_calls:
+                    function_calls.extend(chunk.function_calls)
+                    for fc in chunk.function_calls:
+                        model_content_parts.append(types.Part.from_function_call(name=fc.name, args=fc.args))
                     
-            # Yield end event
+            if function_calls:
+                yield f"data: {json.dumps({'chunk': '\n*Executing tools...*\n', 'conversation_id': str(conv.id)})}\n\n"
+                
+                from app.services.mcp_registry import mcp_registry
+                from app.schemas.mcp import ToolExecuteRequest
+                
+                function_responses = []
+                for fc in function_calls:
+                    tool_name = fc.name.replace("_", ".")
+                    execute_req = ToolExecuteRequest(tool_name=tool_name, arguments=fc.args or {})
+                    res = await mcp_registry.execute_tool(execute_req, current_user=user)
+                    
+                    function_responses.append(types.Part.from_function_response(
+                        name=fc.name,
+                        response={"result": res.result if res.success else res.error}
+                    ))
+                
+                # Append the model's function calls to history
+                contents.append(types.Content(role="model", parts=model_content_parts))
+                # Append the function responses to history
+                contents.append(types.Content(role="user", parts=function_responses))
+                
+                # Generate final response based on tool results
+                final_stream = self.client.models.generate_content_stream(
+                    model='gemini-2.5-flash',
+                    contents=contents,
+                    config=types.GenerateContentConfig(system_instruction=system_instruction)
+                )
+                
+                for chunk in final_stream:
+                    if chunk.text:
+                        ai_full_response += chunk.text
+                        payload = json.dumps({"chunk": chunk.text, "conversation_id": str(conv.id)})
+                        yield f"data: {payload}\n\n"
+
             yield f"data: {json.dumps({'event': 'end'})}\n\n"
 
         except Exception as e:
@@ -150,12 +223,8 @@ class ChatService:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
             
         finally:
-            # Save the interaction to DB once stream finishes or breaks
             if ai_full_response:
-                # Spawn a background task so it doesn't block closing the generator
                 asyncio.create_task(self._save_messages(conv.id, request.message, ai_full_response))
-            
-            # Generate title if it's a brand new conversation
             if not conv.title and len(conv.messages) == 0:
                 asyncio.create_task(self._generate_title(conv.id, request.message))
 

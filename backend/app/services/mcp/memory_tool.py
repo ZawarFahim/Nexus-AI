@@ -30,6 +30,14 @@ class MemoryMCPTool(BaseMCPTool):
                     ToolParameter(name="limit", type="integer", description="Max number of results to return (default 5).", required=False),
                     ToolParameter(name="category", type="string", description="Filter by a specific category.", required=False)
                 ]
+            ),
+            ToolDefinition(
+                name="memory.search_files",
+                description="Perform a semantic search across the user's uploaded files (PDFs, Markdown, etc) to retrieve relevant text chunks.",
+                parameters=[
+                    ToolParameter(name="query", type="string", description="The natural language query to search for.", required=True),
+                    ToolParameter(name="limit", type="integer", description="Max number of chunks to return (default 5).", required=False)
+                ]
             )
         ]
 
@@ -67,6 +75,25 @@ class MemoryMCPTool(BaseMCPTool):
                         "importance_score": m.importance_score,
                         "created_at": str(m.created_at)
                     } for m in results
+                ]
+            }
+            
+        elif tool_name == "memory.search_files":
+            from app.services.rag_service import rag_service
+            query = arguments.get("query")
+            limit = arguments.get("limit", 5)
+            
+            results = await rag_service.search(query, limit=limit)
+            return {
+                "success": True,
+                "count": len(results),
+                "chunks": [
+                    {
+                        "score": r["score"],
+                        "document_id": r["payload"].get("document_id"),
+                        "title": r["payload"].get("title"),
+                        "text": r["payload"].get("text")
+                    } for r in results
                 ]
             }
             

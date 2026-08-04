@@ -7,6 +7,7 @@ import { EmailWidget } from '@/components/dashboard/EmailWidget';
 import { CalendarWidget } from '@/components/dashboard/CalendarWidget';
 import { NotificationsWidget } from '@/components/dashboard/NotificationsWidget';
 import { AnalyticsWidget } from '@/components/dashboard/AnalyticsWidget';
+import { FileUploadWidget } from '@/components/dashboard/FileUploadWidget';
 
 export default function DashboardPage() {
   return (
@@ -32,6 +33,7 @@ export default function DashboardPage() {
           
           {/* Right Sidebar Column */}
           <div className="col-span-1 flex flex-col gap-6">
+            <FileUploadWidget />
             <CalendarWidget />
             <AnalyticsWidget />
           </div>
