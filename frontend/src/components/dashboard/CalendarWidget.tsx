@@ -1,8 +1,9 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Video } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, Video } from 'lucide-react';
 
 const MOCK_EVENTS = [
   { id: 1, title: 'Standup Meeting', time: '10:00 AM - 10:30 AM', type: 'video' },

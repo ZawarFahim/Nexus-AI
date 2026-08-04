@@ -12,12 +12,32 @@ class N8nClient:
     Implements robust retry logic for transient network failures.
     """
     def __init__(self):
-        self.base_url = settings.N8N_BASE_URL.rstrip('/')
+        self.base_url = settings.N8N_BASE_URL.rstrip('/') if hasattr(settings, 'N8N_BASE_URL') else 'http://localhost:5678'
         self.headers = {}
         if settings.N8N_API_KEY:
-            # Depending on how n8n is configured, webhooks might use header auth or query auth
-            # Assuming header auth for secure webhooks
             self.headers["Authorization"] = f"Bearer {settings.N8N_API_KEY}"
+
+    async def _get_auth_info(self, user):
+        from app.db.session import AsyncSessionLocal
+        from app.models.settings import Settings
+        from sqlalchemy import select
+        
+        base_url = self.base_url
+        headers = self.headers.copy()
+        
+        if user:
+            async with AsyncSessionLocal() as db:
+                stmt = select(Settings).where(Settings.user_id == user.id)
+                result = await db.execute(stmt)
+                user_settings = result.scalars().first()
+                if user_settings:
+                    if user_settings.n8n_webhook_url:
+                        # Assuming the user provides the base URL, we extract just the origin or use as is
+                        base_url = user_settings.n8n_webhook_url.rstrip('/')
+                    if user_settings.n8n_api_key:
+                        headers["Authorization"] = f"Bearer {user_settings.n8n_api_key}"
+                        
+        return base_url, headers
 
     @retry(
         stop=stop_after_attempt(3),
@@ -25,15 +45,20 @@ class N8nClient:
         retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
         reraise=True
     )
-    async def trigger_workflow(self, payload: N8nWebhookPayload) -> N8nExecutionResult:
+    async def trigger_workflow(self, payload: N8nWebhookPayload, user=None) -> N8nExecutionResult:
         """
         Trigger an n8n webhook and wait for the response.
         Automatically retries on network errors or timeouts using exponential backoff.
         """
-        url = f"{self.base_url}/webhook/{payload.webhook_id}"
+        base_url, headers = await self._get_auth_info(user)
+        # Handle case where user provided full webhook URL vs base URL
+        if base_url.endswith(payload.webhook_id):
+            url = base_url
+        else:
+            url = f"{base_url}/webhook/{payload.webhook_id}"
         
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=30.0) as client:
+            async with httpx.AsyncClient(headers=headers, timeout=30.0) as client:
                 logger.info(f"Triggering n8n workflow at {url}")
                 response = await client.post(url, json=payload.data)
                 

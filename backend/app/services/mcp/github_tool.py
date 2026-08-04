@@ -13,11 +13,32 @@ class GitHubMCPTool(BaseMCPTool):
     
     def __init__(self):
         self.base_url = "https://api.github.com"
-        self.headers = {
+
+    async def _get_client(self, user: User) -> httpx.AsyncClient:
+        headers = {
             "Accept": "application/vnd.github.v3+json",
         }
-        if settings.GITHUB_ACCESS_TOKEN:
-            self.headers["Authorization"] = f"token {settings.GITHUB_ACCESS_TOKEN}"
+        
+        from app.db.session import AsyncSessionLocal
+        from app.models.settings import Settings
+        from sqlalchemy import select
+        
+        async with AsyncSessionLocal() as db:
+            stmt = select(Settings).where(Settings.user_id == user.id)
+            result = await db.execute(stmt)
+            user_settings = result.scalars().first()
+            
+            pat = None
+            if user_settings and user_settings.github_pat:
+                pat = user_settings.github_pat
+            elif settings.GITHUB_ACCESS_TOKEN:
+                # Fallback to global setting if no user-specific token
+                pat = settings.GITHUB_ACCESS_TOKEN
+                
+            if pat:
+                headers["Authorization"] = f"token {pat}"
+                
+        return httpx.AsyncClient(headers=headers)
 
     def get_definitions(self) -> List[ToolDefinition]:
         return [
@@ -53,7 +74,7 @@ class GitHubMCPTool(BaseMCPTool):
 
     async def execute(self, tool_name: str, arguments: Dict[str, Any], user: User) -> Any:
         # Route execution based on tool_name
-        async with httpx.AsyncClient(headers=self.headers) as client:
+        async with await self._get_client(user) as client:
             if tool_name == "github.list_repositories":
                 return await self._list_repositories(client)
             elif tool_name == "github.repository_summary":

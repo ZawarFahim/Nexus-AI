@@ -17,6 +17,11 @@ class Settings(Base):
     default_llm: Mapped[str] = mapped_column(String, default="gemini-1.5-flash")
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    # Integrations
+    github_pat: Mapped[str] = mapped_column(String, nullable=True)
+    n8n_webhook_url: Mapped[str] = mapped_column(String, nullable=True)
+    n8n_api_key: Mapped[str] = mapped_column(String, nullable=True)
+
     user = relationship("User", back_populates="settings")
 
 

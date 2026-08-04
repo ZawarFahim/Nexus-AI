@@ -26,15 +26,25 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  async post<T>(endpoint: string, data: any): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    return this.handleResponse<T>(response);
-  }
+    async post<T>(endpoint: string, data: any): Promise<T> {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+  
+      return this.handleResponse<T>(response);
+    }
+  
+    async put<T>(endpoint: string, data: any): Promise<T> {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+  
+      return this.handleResponse<T>(response);
+    }
 
   // Handle x-www-form-urlencoded (for OAuth2 login)
   async postForm<T>(endpoint: string, data: Record<string, string>): Promise<T> {

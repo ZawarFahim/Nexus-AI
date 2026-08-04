@@ -39,7 +39,7 @@ class N8nMCPTool(BaseMCPTool):
                 webhook_id="daily-briefing",
                 data={"user_id": str(user.id)}
             )
-            result = await n8n_client.trigger_workflow(payload)
+            result = await n8n_client.trigger_workflow(payload, user)
             if not result.success:
                 raise RuntimeError(f"n8n Workflow Failed: {result.logs}")
             return result.data
@@ -49,21 +49,17 @@ class N8nMCPTool(BaseMCPTool):
                 webhook_id="smart-email",
                 data={"user_id": str(user.id)}
             )
-            result = await n8n_client.trigger_workflow(payload)
+            result = await n8n_client.trigger_workflow(payload, user)
             if not result.success:
                 raise RuntimeError(f"n8n Workflow Failed: {result.logs}")
             return result.data
             
         elif tool_name == "n8n.confirm_smart_email":
-            # The wait node creates a dynamic webhook URL based on the execution ID.
-            # Usually the Wait node webhook URL format is: /webhook-waiting/{execution_id}
-            # Or in this case we defined the path as "confirm-email", so the resume URL is handled by n8n.
-            # For simplicity in this demo wrapper, we pass it to the configured path.
             payload = N8nWebhookPayload(
                 webhook_id=f"confirm-email/{arguments.get('execution_id')}",
                 data={"approved_reply": arguments.get("approved_reply")}
             )
-            result = await n8n_client.trigger_workflow(payload)
+            result = await n8n_client.trigger_workflow(payload, user)
             if not result.success:
                 raise RuntimeError(f"n8n Workflow Failed: {result.logs}")
             return result.data
