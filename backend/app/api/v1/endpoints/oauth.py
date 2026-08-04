@@ -19,10 +19,12 @@ async def login_via_google(request: Request):
     redirect_uri = request.url_for('auth_via_google')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@router.get("/google/callback", response_model=Token)
+from fastapi.responses import RedirectResponse
+
+@router.get("/google/callback")
 async def auth_via_google(request: Request, db: AsyncSession = Depends(deps.get_db)) -> Any:
     """
-    Handle Google OAuth callback, provision user, and return JWT tokens.
+    Handle Google OAuth callback, provision user, and redirect to frontend.
     """
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -38,8 +40,6 @@ async def auth_via_google(request: Request, db: AsyncSession = Depends(deps.get_
     access_token = security.create_access_token(subject=user.id)
     refresh_token = security.create_refresh_token(subject=user.id)
     
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    frontend_url = "http://localhost:3000/login"
+    response = RedirectResponse(url=f"{frontend_url}?access_token={access_token}&refresh_token={refresh_token}")
+    return response
