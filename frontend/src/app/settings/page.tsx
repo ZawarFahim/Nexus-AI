@@ -50,7 +50,7 @@ export default function SettingsPage() {
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = 'http://localhost:8000/api/v1/oauth/google/login';
+    window.location.href = 'http://localhost:8000/api/v1/oauth/google/login?redirect=/settings';
   };
 
   return (

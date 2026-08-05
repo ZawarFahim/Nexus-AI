@@ -11,10 +11,13 @@ from app.schemas.token import Token
 router = APIRouter()
 
 @router.get("/google/login")
-async def login_via_google(request: Request):
+async def login_via_google(request: Request, redirect: str = None):
     """
     Redirect the user to Google's consent screen.
     """
+    if redirect:
+        request.session['oauth_redirect'] = redirect
+        
     # Assuming the API runs locally. In production, this should be the full external URL.
     redirect_uri = request.url_for('auth_via_google')
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -41,5 +44,11 @@ async def auth_via_google(request: Request, db: AsyncSession = Depends(deps.get_
     refresh_token = security.create_refresh_token(subject=user.id)
     
     frontend_url = "http://localhost:3000/login"
-    response = RedirectResponse(url=f"{frontend_url}?access_token={access_token}&refresh_token={refresh_token}")
+    query = f"?access_token={access_token}&refresh_token={refresh_token}"
+    
+    frontend_redirect = request.session.pop('oauth_redirect', None)
+    if frontend_redirect:
+        query += f"&redirect={frontend_redirect}"
+        
+    response = RedirectResponse(url=f"{frontend_url}{query}")
     return response

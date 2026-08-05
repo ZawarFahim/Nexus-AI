@@ -18,10 +18,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
+    const redirectTo = searchParams.get('redirect') || '/dashboard';
     if (accessToken) {
       localStorage.setItem('access_token', accessToken);
       // Let the AuthContext pick up the token or just force a redirect
-      window.location.href = '/dashboard';
+      window.location.href = redirectTo;
     }
   }, [searchParams]);
 

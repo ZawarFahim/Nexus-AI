@@ -37,12 +37,21 @@ async def get_settings(
     oauth_result = await db.execute(oauth_stmt)
     oauth_account = oauth_result.scalar_one_or_none()
     
-    response_data = SettingsResponse.model_validate(settings)
-    if oauth_account and oauth_account.access_token:
-        response_data.google_connected = True
-        response_data.google_email = current_user.email
-        
-    return response_data
+    response_dict = {
+        "id": str(settings.id),
+        "user_id": str(settings.user_id),
+        "theme": settings.theme,
+        "language": settings.language,
+        "voice_enabled": settings.voice_enabled,
+        "default_llm": settings.default_llm,
+        "notifications_enabled": settings.notifications_enabled,
+        "github_pat": settings.github_pat,
+        "n8n_webhook_url": settings.n8n_webhook_url,
+        "n8n_api_key": settings.n8n_api_key,
+        "google_connected": bool(oauth_account and oauth_account.access_token),
+        "google_email": current_user.email if (oauth_account and oauth_account.access_token) else None
+    }
+    return response_dict
 
 @router.put("/", response_model=SettingsResponse)
 async def update_settings(
@@ -77,9 +86,18 @@ async def update_settings(
     oauth_result = await db.execute(oauth_stmt)
     oauth_account = oauth_result.scalar_one_or_none()
     
-    response_data = SettingsResponse.model_validate(settings)
-    if oauth_account and oauth_account.access_token:
-        response_data.google_connected = True
-        response_data.google_email = current_user.email
-        
-    return response_data
+    response_dict = {
+        "id": str(settings.id),
+        "user_id": str(settings.user_id),
+        "theme": settings.theme,
+        "language": settings.language,
+        "voice_enabled": settings.voice_enabled,
+        "default_llm": settings.default_llm,
+        "notifications_enabled": settings.notifications_enabled,
+        "github_pat": settings.github_pat,
+        "n8n_webhook_url": settings.n8n_webhook_url,
+        "n8n_api_key": settings.n8n_api_key,
+        "google_connected": bool(oauth_account and oauth_account.access_token),
+        "google_email": current_user.email if (oauth_account and oauth_account.access_token) else None
+    }
+    return response_dict
