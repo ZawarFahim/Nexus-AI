@@ -6,11 +6,12 @@ from sqlalchemy.future import select
 from app.api import deps
 from app.models.user import User
 from app.models.settings import Settings
-from app.schemas.settings import SettingsUpdate, SettingsInDB
+from app.schemas.settings import SettingsUpdate, SettingsInDB, SettingsResponse
+from app.models.settings import OAuthAccount
 
 router = APIRouter()
 
-@router.get("/", response_model=SettingsInDB)
+@router.get("/", response_model=SettingsResponse)
 async def get_settings(
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -28,9 +29,22 @@ async def get_settings(
         await db.commit()
         await db.refresh(settings)
         
-    return settings
+    # Check Google OAuth status
+    oauth_stmt = select(OAuthAccount).where(
+        OAuthAccount.user_id == current_user.id,
+        OAuthAccount.provider == "google"
+    )
+    oauth_result = await db.execute(oauth_stmt)
+    oauth_account = oauth_result.scalar_one_or_none()
+    
+    response_data = SettingsResponse.model_validate(settings)
+    if oauth_account and oauth_account.access_token:
+        response_data.google_connected = True
+        response_data.google_email = current_user.email
+        
+    return response_data
 
-@router.put("/", response_model=SettingsInDB)
+@router.put("/", response_model=SettingsResponse)
 async def update_settings(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -54,4 +68,18 @@ async def update_settings(
         
     await db.commit()
     await db.refresh(settings)
-    return settings
+    
+    # Check Google OAuth status for response
+    oauth_stmt = select(OAuthAccount).where(
+        OAuthAccount.user_id == current_user.id,
+        OAuthAccount.provider == "google"
+    )
+    oauth_result = await db.execute(oauth_stmt)
+    oauth_account = oauth_result.scalar_one_or_none()
+    
+    response_data = SettingsResponse.model_validate(settings)
+    if oauth_account and oauth_account.access_token:
+        response_data.google_connected = True
+        response_data.google_email = current_user.email
+        
+    return response_data

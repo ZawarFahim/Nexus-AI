@@ -85,13 +85,16 @@ export function useChatStream() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
+      let buffer = "";
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
 
-        const events = chunkValue.split('\n\n');
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ""; // keep the last incomplete chunk in the buffer
+
         for (const event of events) {
           if (event.startsWith('data: ')) {
             const dataStr = event.substring(6);
@@ -123,7 +126,7 @@ export function useChatStream() {
                 );
               }
             } catch (e) {
-              console.warn("Failed to parse SSE chunk:", e);
+              console.warn("Failed to parse SSE chunk:", e, "Data string:", dataStr);
             }
           }
         }
@@ -141,7 +144,7 @@ export function useChatStream() {
     }
   };
 
-  const sendAudioMessage = async (audioBlob: Blob) => {
+  const sendAudioMessage = async (audioBlob: Blob): Promise<string | undefined> => {
     const token = localStorage.getItem('access_token');
     if (!token) return;
 
@@ -161,13 +164,12 @@ export function useChatStream() {
       if (!response.ok) throw new Error("Transcription failed");
       
       const data = await response.json();
-      if (data.text) {
-        // Send the transcribed text and request TTS playback
-        await sendMessage(data.text, { synthesizeResponse: true });
-      }
+      setIsTyping(false);
+      return data.text;
     } catch (error) {
       console.error("Failed to transcribe audio:", error);
       setIsTyping(false);
+      return undefined;
     }
   };
 

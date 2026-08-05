@@ -20,3 +20,7 @@ class SettingsInDB(SettingsBase):
     user_id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+class SettingsResponse(SettingsInDB):
+    google_connected: bool = False
+    google_email: Optional[str] = None

@@ -13,6 +13,8 @@ export default function SettingsPage() {
     n8n_webhook_url: '',
     n8n_api_key: ''
   });
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -25,6 +27,8 @@ export default function SettingsPage() {
           n8n_webhook_url: data.n8n_webhook_url || '',
           n8n_api_key: data.n8n_api_key || ''
         });
+        setGoogleConnected(data.google_connected || false);
+        setGoogleEmail(data.google_email || '');
       } catch (err) {
         console.error("Failed to load settings:", err);
       }
@@ -70,9 +74,26 @@ export default function SettingsPage() {
               <CardDescription>Connect Google to enable Gmail and Calendar features.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={handleGoogleAuth} variant="outline" className="gap-2">
-                Connect Google Account
-              </Button>
+              {googleConnected ? (
+                <div className="flex items-center justify-between bg-muted p-4 rounded-md border">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/20 p-2 rounded-full text-primary">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Connected</p>
+                      <p className="text-sm text-muted-foreground">{googleEmail}</p>
+                    </div>
+                  </div>
+                  <Button onClick={handleGoogleAuth} variant="outline" size="sm">
+                    Reconnect
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={handleGoogleAuth} variant="outline" className="gap-2">
+                  Connect Google Account
+                </Button>
+              )}
             </CardContent>
           </Card>
 

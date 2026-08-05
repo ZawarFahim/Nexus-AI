@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
-  onAudioSend?: (audioBlob: Blob) => void;
+  onAudioSend?: (audioBlob: Blob) => Promise<string | undefined>;
   disabled?: boolean;
 }
 
@@ -53,10 +53,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onAudioSend, disab
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         if (onAudioSend) {
-          onAudioSend(audioBlob);
+          const text = await onAudioSend(audioBlob);
+          if (text) {
+            setValue(prev => (prev ? prev + ' ' + text : text));
+          }
         }
         stream.getTracks().forEach(track => track.stop());
       };
