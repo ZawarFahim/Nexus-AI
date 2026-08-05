@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from typing import List
+from typing import List, Any
 import uuid
 from sqlalchemy import select
 
@@ -17,7 +17,7 @@ router = APIRouter()
 async def chat_stream_endpoint(
     request: ChatRequest,
     current_user: User = Depends(deps.get_current_user)
-):
+) -> StreamingResponse:
     """
     Stream the AI's response using Server-Sent Events (SSE).
     """
@@ -29,7 +29,7 @@ async def chat_stream_endpoint(
 @router.get("/conversations", response_model=List[ConversationSchema])
 async def get_conversations(
     current_user: User = Depends(deps.get_current_user)
-):
+) -> Any:
     """Fetch all conversations for the authenticated user."""
     async with AsyncSessionLocal() as db:
         stmt = select(Conversation).where(
@@ -43,7 +43,7 @@ async def get_conversations(
 async def get_conversation_messages(
     conversation_id: uuid.UUID,
     current_user: User = Depends(deps.get_current_user)
-):
+) -> Any:
     """Fetch the message history for a specific conversation."""
     async with AsyncSessionLocal() as db:
         # First verify ownership

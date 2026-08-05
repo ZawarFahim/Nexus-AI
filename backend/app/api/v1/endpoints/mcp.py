@@ -1,5 +1,5 @@
 from typing import List, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from app.api import deps
 from app.schemas.mcp import ToolDefinition, ToolExecuteRequest, ToolExecuteResponse
 from app.services.mcp_registry import mcp_registry

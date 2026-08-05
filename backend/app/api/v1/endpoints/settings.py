@@ -1,12 +1,12 @@
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.api import deps
 from app.models.user import User
 from app.models.settings import Settings
-from app.schemas.settings import SettingsUpdate, SettingsInDB, SettingsResponse
+from app.schemas.settings import SettingsUpdate, SettingsResponse
 from app.models.settings import OAuthAccount
 
 router = APIRouter()
@@ -71,7 +71,7 @@ async def update_settings(
         settings = Settings(user_id=current_user.id)
         db.add(settings)
         
-    update_data = settings_in.dict(exclude_unset=True)
+    update_data = settings_in.model_dump(exclude_unset=True)
     for field in update_data:
         setattr(settings, field, update_data[field])
         

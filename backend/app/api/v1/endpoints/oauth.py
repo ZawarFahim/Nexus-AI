@@ -1,17 +1,17 @@
 from typing import Any
 from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.core.oauth import oauth
 from app.core import security
 from app.crud import crud_oauth
-from app.schemas.token import Token
 
 router = APIRouter()
 
 @router.get("/google/login")
-async def login_via_google(request: Request, redirect: str = None):
+async def login_via_google(request: Request, redirect: str | None = None) -> Any:
     """
     Redirect the user to Google's consent screen.
     """
@@ -21,8 +21,6 @@ async def login_via_google(request: Request, redirect: str = None):
     # Assuming the API runs locally. In production, this should be the full external URL.
     redirect_uri = request.url_for('auth_via_google')
     return await oauth.google.authorize_redirect(request, redirect_uri)
-
-from fastapi.responses import RedirectResponse
 
 @router.get("/google/callback")
 async def auth_via_google(request: Request, db: AsyncSession = Depends(deps.get_db)) -> Any:
@@ -40,8 +38,8 @@ async def auth_via_google(request: Request, db: AsyncSession = Depends(deps.get_
         
     user = await crud_oauth.get_or_create_google_user(db=db, profile=user_info, token=token)
     
-    access_token = security.create_access_token(subject=user.id)
-    refresh_token = security.create_refresh_token(subject=user.id)
+    access_token = security.create_access_token(subject=str(user.id))
+    refresh_token = security.create_refresh_token(subject=str(user.id))
     
     frontend_url = "http://localhost:3000/login"
     query = f"?access_token={access_token}&refresh_token={refresh_token}"
