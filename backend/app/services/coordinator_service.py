@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ToolSelectionResponse(BaseModel):
     tool_name: Optional[str] = Field(None, description="The precise name of the tool to execute, or null if no tool is appropriate.")
-    arguments: Dict[str, Any] = Field(default_factory=dict, description="The arguments to pass to the tool.")
+    arguments_json: str = Field(default="{}", description="A JSON string containing the arguments to pass to the tool.")
 
 class CoordinatorService:
     """
@@ -73,7 +73,7 @@ class CoordinatorService:
         system_instruction = (
             "You are the Agent Coordinator. Your job is to select the exact MCP tool required to fulfill a task.\n"
             "Analyze the task description and the available tools schema.\n"
-            "Return the exact tool_name and the required arguments as JSON.\n"
+            "Return the exact tool_name and the required arguments as JSON string.\n"
             "If no tool matches, return null for tool_name."
         )
         
@@ -108,10 +108,16 @@ class CoordinatorService:
                 return ExecutionLog(task=task.description, success=False, result="No suitable tool found by the coordinator.")
 
             # 2. Execute the chosen tool
-            logger.info(f"Coordinator executing tool: {selection_data.tool_name} with args: {selection_data.arguments}")
+            logger.info(f"Coordinator executing tool: {selection_data.tool_name} with args: {selection_data.arguments_json}")
+            
+            try:
+                arguments = json.loads(selection_data.arguments_json)
+            except json.JSONDecodeError:
+                arguments = {}
+                
             execute_req = ToolExecuteRequest(
                 tool_name=selection_data.tool_name,
-                arguments=selection_data.arguments
+                arguments=arguments
             )
             
             tool_res = await mcp_registry.execute_tool(execute_req, current_user=user)
