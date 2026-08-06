@@ -85,7 +85,7 @@ class VoiceService:
             
         try:
             with wave.open(temp_path, "wb") as wav_file:
-                self.piper_voice.synthesize(text, wav_file)
+                self.piper_voice.synthesize_wav(text, wav_file)
                 
             # Stream the generated file back
             with open(temp_path, "rb") as f:

@@ -12,8 +12,8 @@ import { motion } from 'framer-motion';
 export const ChatInterface = () => {
   const { messages, isTyping, sendMessage, sendAudioMessage, scrollRef } = useChatStream();
   
-  const handleSend = (text: string) => {
-    sendMessage(text);
+  const handleSend = (text: string, options?: { synthesizeResponse?: boolean }) => {
+    sendMessage(text, options);
   };
 
   return (

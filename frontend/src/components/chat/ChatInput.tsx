@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion';
 
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, options?: { synthesizeResponse?: boolean }) => void;
   onAudioSend?: (audioBlob: Blob) => Promise<string | undefined>;
   disabled?: boolean;
 }
@@ -58,7 +58,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onAudioSend, disab
         if (onAudioSend) {
           const text = await onAudioSend(audioBlob);
           if (text) {
-            setValue(prev => (prev ? prev + ' ' + text : text));
+            onSend(text, { synthesizeResponse: true });
           }
         }
         stream.getTracks().forEach(track => track.stop());
