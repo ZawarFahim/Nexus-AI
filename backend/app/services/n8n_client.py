@@ -12,7 +12,15 @@ class N8nClient:
     Implements robust retry logic for transient network failures.
     """
     def __init__(self):
-        self.base_url = settings.N8N_BASE_URL.rstrip('/') if hasattr(settings, 'N8N_BASE_URL') else 'http://localhost:5678'
+        # Prefer N8N_WEBHOOK_URL if set to something other than localhost (like in Docker)
+        webhook_env = getattr(settings, 'N8N_WEBHOOK_URL', '')
+        base_env = getattr(settings, 'N8N_BASE_URL', 'http://localhost:5678')
+        
+        if webhook_env and 'localhost' not in webhook_env:
+            self.base_url = webhook_env.rstrip('/')
+        else:
+            self.base_url = base_env.rstrip('/')
+            
         self.headers = {}
         if settings.N8N_API_KEY:
             self.headers["Authorization"] = f"Bearer {settings.N8N_API_KEY}"
@@ -39,11 +47,16 @@ class N8nClient:
                         
         return base_url, headers
 
+    def _handle_retry_error(retry_state):
+        e = retry_state.outcome.exception()
+        logger.error(f"n8n workflow failed after retries: {e}")
+        return N8nExecutionResult(success=False, logs=f"Network error after retries: {str(e)}")
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
-        reraise=True
+        retry_error_callback=_handle_retry_error
     )
     async def trigger_workflow(self, payload: N8nWebhookPayload, user=None) -> N8nExecutionResult:
         """
@@ -79,6 +92,9 @@ class N8nClient:
         except httpx.HTTPStatusError as e:
             logger.error(f"n8n workflow {payload.webhook_id} failed with status {e.response.status_code}: {e.response.text}")
             return N8nExecutionResult(success=False, logs=f"HTTP {e.response.status_code}: {e.response.text}")
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            logger.warning(f"Network error triggering n8n workflow, raising for retry: {e}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error triggering n8n workflow {payload.webhook_id}: {e}")
             return N8nExecutionResult(success=False, logs=str(e))
