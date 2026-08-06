@@ -24,3 +24,5 @@ class SettingsInDB(SettingsBase):
 class SettingsResponse(SettingsInDB):
     google_connected: bool = False
     google_email: Optional[str] = None
+    github_connected: bool = False
+    github_username: Optional[str] = None

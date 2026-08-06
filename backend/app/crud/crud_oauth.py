@@ -70,3 +70,47 @@ async def get_or_create_google_user(db: AsyncSession, profile: Dict[str, Any], t
     await db.commit()
     
     return user
+
+async def link_oauth_account(db: AsyncSession, current_user: User, provider: str, profile: Dict[str, Any], token: Dict[str, Any]) -> None:
+    """Link an OAuth account (Google, GitHub) to an already-logged-in user."""
+    # Check if they have an existing OAuth account record for this provider
+    oauth_stmt = select(OAuthAccount).where(
+        OAuthAccount.user_id == current_user.id,
+        OAuthAccount.provider == provider
+    )
+    oauth_result = await db.execute(oauth_stmt)
+    oauth_account = oauth_result.scalars().first()
+
+    access_token = token.get("access_token", "")
+    refresh_token = token.get("refresh_token")
+    expires_at = token.get("expires_at")
+    
+    if refresh_token:
+        # Encrypt the refresh token before saving
+        refresh_token = encrypt_token(refresh_token)
+
+    provider_user_id = profile.get("sub", "") if provider == "google" else str(profile.get("id", ""))
+
+    if oauth_account:
+        # Update tokens
+        oauth_account.access_token = access_token
+        if refresh_token:
+            oauth_account.refresh_token = refresh_token
+        if expires_at:
+            from datetime import datetime
+            oauth_account.expires_at = datetime.fromtimestamp(expires_at)
+        oauth_account.provider_user_id = provider_user_id
+    else:
+        # Create new OAuth account link
+        from datetime import datetime
+        oauth_account = OAuthAccount(
+            user_id=current_user.id,
+            provider=provider,
+            provider_user_id=provider_user_id,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=datetime.fromtimestamp(expires_at) if expires_at else None
+        )
+        db.add(oauth_account)
+
+    await db.commit()

@@ -16,24 +16,29 @@ export default function SettingsPage() {
   });
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState('');
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const fetchSettings = async () => {
+    try {
+      const data = await api.get<any>('/settings');
+      setSettings({
+        github_pat: data.github_pat || '',
+        n8n_webhook_url: data.n8n_webhook_url || '',
+        n8n_api_key: data.n8n_api_key || ''
+      });
+      setGoogleConnected(data.google_connected || false);
+      setGoogleEmail(data.google_email || '');
+      setGithubConnected(data.github_connected || false);
+      setGithubUsername(data.github_username || '');
+    } catch (err) {
+      console.error("Failed to load settings:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await api.get<any>('/settings');
-        setSettings({
-          github_pat: data.github_pat || '',
-          n8n_webhook_url: data.n8n_webhook_url || '',
-          n8n_api_key: data.n8n_api_key || ''
-        });
-        setGoogleConnected(data.google_connected || false);
-        setGoogleEmail(data.google_email || '');
-      } catch (err) {
-        console.error("Failed to load settings:", err);
-      }
-    };
     fetchSettings();
   }, []);
 
@@ -50,8 +55,39 @@ export default function SettingsPage() {
     }
   };
 
+  const openOAuthPopup = (provider: string) => {
+    const token = localStorage.getItem('access_token');
+    const width = 500;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    const popup = window.open(
+      `${API_BASE_URL}/oauth/${provider}/login?redirect=popup&token=${token}`,
+      `${provider} Auth`,
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'oauth_complete') {
+        if (event.data.access_token) {
+          localStorage.setItem('access_token', event.data.access_token);
+        }
+        popup?.close();
+        fetchSettings();
+        window.removeEventListener('message', handleMessage);
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+  };
+
   const handleGoogleAuth = () => {
-    window.location.href = `${API_BASE_URL}/oauth/google/login?redirect=/settings`;
+    openOAuthPopup('google');
+  };
+
+  const handleGithubAuth = () => {
+    openOAuthPopup('github');
   };
 
   return (
@@ -103,19 +139,42 @@ export default function SettingsPage() {
               <CardTitle className="flex items-center gap-2">
                 <GitBranch className="h-5 w-5" /> GitHub
               </CardTitle>
-              <CardDescription>Provide a Personal Access Token (PAT) for GitHub integrations.</CardDescription>
+              <CardDescription>Connect your GitHub account or provide a PAT for integrations.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
+                <div>
+                  {githubConnected ? (
+                    <div className="flex items-center justify-between bg-muted p-4 rounded-md border">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/20 p-2 rounded-full text-primary">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Connected</p>
+                          <p className="text-sm text-muted-foreground">{githubUsername}</p>
+                        </div>
+                      </div>
+                      <Button onClick={handleGithubAuth} variant="outline" size="sm">
+                        Reconnect
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button onClick={handleGithubAuth} variant="outline" className="gap-2">
+                      Connect GitHub Account
+                    </Button>
+                  )}
+                </div>
+                
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">GitHub Personal Access Token</label>
+                  <label className="text-sm font-medium">GitHub Personal Access Token (Alternative)</label>
                   <Input 
                     type="password" 
                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
                     value={settings.github_pat}
                     onChange={(e) => setSettings({...settings, github_pat: e.target.value})}
                   />
-                  <p className="text-xs text-muted-foreground">Requires repo and user scopes.</p>
+                  <p className="text-xs text-muted-foreground">Requires repo and user scopes. Used as a fallback if OAuth is not configured.</p>
                 </div>
               </div>
             </CardContent>

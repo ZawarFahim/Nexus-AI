@@ -29,13 +29,13 @@ async def get_settings(
         await db.commit()
         await db.refresh(settings)
         
-    # Check Google OAuth status
+    # Check Google and Github OAuth status
     oauth_stmt = select(OAuthAccount).where(
-        OAuthAccount.user_id == current_user.id,
-        OAuthAccount.provider == "google"
+        OAuthAccount.user_id == current_user.id
     )
-    oauth_result = await db.execute(oauth_stmt)
-    oauth_account = oauth_result.scalar_one_or_none()
+    oauth_results = (await db.execute(oauth_stmt)).scalars().all()
+    google_account = next((a for a in oauth_results if a.provider == "google"), None)
+    github_account = next((a for a in oauth_results if a.provider == "github"), None)
     
     response_dict = {
         "id": str(settings.id),
@@ -48,8 +48,10 @@ async def get_settings(
         "github_pat": settings.github_pat,
         "n8n_webhook_url": settings.n8n_webhook_url,
         "n8n_api_key": settings.n8n_api_key,
-        "google_connected": bool(oauth_account and oauth_account.access_token),
-        "google_email": current_user.email if (oauth_account and oauth_account.access_token) else None
+        "google_connected": bool(google_account and google_account.access_token),
+        "google_email": current_user.email if (google_account and google_account.access_token) else None,
+        "github_connected": bool(github_account and github_account.access_token),
+        "github_username": github_account.provider_user_id if github_account else None
     }
     return response_dict
 
@@ -78,13 +80,13 @@ async def update_settings(
     await db.commit()
     await db.refresh(settings)
     
-    # Check Google OAuth status for response
+    # Check Google and Github OAuth status for response
     oauth_stmt = select(OAuthAccount).where(
-        OAuthAccount.user_id == current_user.id,
-        OAuthAccount.provider == "google"
+        OAuthAccount.user_id == current_user.id
     )
-    oauth_result = await db.execute(oauth_stmt)
-    oauth_account = oauth_result.scalar_one_or_none()
+    oauth_results = (await db.execute(oauth_stmt)).scalars().all()
+    google_account = next((a for a in oauth_results if a.provider == "google"), None)
+    github_account = next((a for a in oauth_results if a.provider == "github"), None)
     
     response_dict = {
         "id": str(settings.id),
@@ -97,7 +99,9 @@ async def update_settings(
         "github_pat": settings.github_pat,
         "n8n_webhook_url": settings.n8n_webhook_url,
         "n8n_api_key": settings.n8n_api_key,
-        "google_connected": bool(oauth_account and oauth_account.access_token),
-        "google_email": current_user.email if (oauth_account and oauth_account.access_token) else None
+        "google_connected": bool(google_account and google_account.access_token),
+        "google_email": current_user.email if (google_account and google_account.access_token) else None,
+        "github_connected": bool(github_account and github_account.access_token),
+        "github_username": github_account.provider_user_id if github_account else None
     }
     return response_dict
