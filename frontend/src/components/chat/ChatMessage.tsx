@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -46,7 +47,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ role, content }) => {
       const token = localStorage.getItem('access_token');
       const cleanText = content.replace(/[*#`]/g, '').trim();
       
-      const response = await fetch('http://localhost:8000/api/v1/voice/synthesize', {
+      const response = await fetch(`${API_BASE_URL}/voice/synthesize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

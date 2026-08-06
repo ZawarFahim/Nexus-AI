@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BrainCircuit, Loader2, Sparkles, Tag, Plus } from 'lucide-react';
@@ -27,7 +28,7 @@ export default function MemoryPage() {
         const token = localStorage.getItem('access_token');
         if (!token) throw new Error("Not authenticated");
 
-        const response = await fetch('http://localhost:8000/api/v1/memory/', {
+        const response = await fetch(`${API_BASE_URL}/memory/`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

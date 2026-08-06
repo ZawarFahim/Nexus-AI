@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +14,7 @@ export const EmailWidget = () => {
   useEffect(() => {
     const fetchEmails = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/dashboard/emails', {
+        const response = await fetch(`${API_BASE_URL}/dashboard/emails`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }

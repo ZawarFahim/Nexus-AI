@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Workflow } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +21,7 @@ export const WorkflowStatusWidget = () => {
   useEffect(() => {
     const fetchWorkflows = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/dashboard/workflows', {
+        const response = await fetch(`${API_BASE_URL}/dashboard/workflows`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }

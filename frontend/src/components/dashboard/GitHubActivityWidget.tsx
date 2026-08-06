@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GitPullRequest, GitCommit, GitMerge, Star } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +13,7 @@ export const GitHubActivityWidget = () => {
   useEffect(() => {
     const fetchGithub = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/dashboard/github', {
+        const response = await fetch(`${API_BASE_URL}/dashboard/github`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }

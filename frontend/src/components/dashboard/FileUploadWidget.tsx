@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Upload, FileText, Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export function FileUploadWidget() {
     const token = localStorage.getItem('access_token');
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/files/upload', {
+      const response = await fetch(`${API_BASE_URL}/files/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

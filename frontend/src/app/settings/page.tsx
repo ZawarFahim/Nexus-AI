@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -50,7 +51,7 @@ export default function SettingsPage() {
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = 'http://localhost:8000/api/v1/oauth/google/login?redirect=/settings';
+    window.location.href = `${API_BASE_URL}/oauth/google/login?redirect=/settings`;
   };
 
   return (

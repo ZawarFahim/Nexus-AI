@@ -1,4 +1,12 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const getApiBaseUrl = () => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  if (typeof window === 'undefined') {
+    return baseUrl.replace('localhost', 'backend');
+  }
+  return baseUrl;
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 class ApiClient {
   private getHeaders(): HeadersInit {

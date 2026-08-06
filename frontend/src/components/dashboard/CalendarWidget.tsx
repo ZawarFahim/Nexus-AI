@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Video } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,7 +19,7 @@ export const CalendarWidget = () => {
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/dashboard/calendar', {
+        const response = await fetch(`${API_BASE_URL}/dashboard/calendar`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }

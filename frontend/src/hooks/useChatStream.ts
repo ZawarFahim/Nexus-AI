@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface Message {
   id: string;
@@ -25,7 +26,7 @@ export function useChatStream() {
       const cleanText = text.replace(/[*#`]/g, '').trim();
       if (!cleanText) return;
       
-      const response = await fetch('http://localhost:8000/api/v1/voice/synthesize', {
+      const response = await fetch(`${API_BASE_URL}/voice/synthesize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +69,7 @@ export function useChatStream() {
     let fullAiContent = "";
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/chat/stream', {
+      const response = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ export function useChatStream() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const response = await fetch('http://localhost:8000/api/v1/voice/transcribe', {
+      const response = await fetch(`${API_BASE_URL}/voice/transcribe`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
