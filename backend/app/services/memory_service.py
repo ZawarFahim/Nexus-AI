@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 import uuid
 import json
@@ -76,63 +77,61 @@ class MemoryService:
         )
         return response.embeddings[0].values
 
-    async def save_memory(self, user: User, data: MemoryCreate) -> MemoryResponse:
+    async def save_memory(self, user: User, data: MemoryCreate, db: AsyncSession) -> MemoryResponse:
         """Saves a new memory into PostgreSQL and Qdrant."""
         
         # 1. Analyze and Embed
         importance_score = await self._calculate_importance(data.content)
         vector = await self._generate_embedding(data.content)
         
-        # 2. Database transaction
-        async with AsyncSessionLocal() as db:
-            qdrant_uuid = str(uuid.uuid4())
-            memory_uuid = uuid.uuid4()
-            
-            # Store in PostgreSQL
-            db_memory = Memory(
-                id=memory_uuid,
-                user_id=user.id,
-                title=data.title,
-                content=data.content,
-                category=data.category,
-                importance_score=importance_score,
-                # Link to the Qdrant Point UUID
-                embedding_id=uuid.UUID(qdrant_uuid)
-            )
-            db.add(db_memory)
-            
-            # Audit log in Embedding table
-            db_embed = Embedding(
-                memory_id=memory_uuid,
-                vector_id=uuid.UUID(qdrant_uuid),
-                embedding_model="text-embedding-004"
-            )
-            db.add(db_embed)
-            
-            await db.commit()
-            await db.refresh(db_memory)
-            
-            # 3. Store in Qdrant
-            # We store the memory_id and user_id in the payload for fast reverse-lookups and secure filtering
-            self.qdrant.upsert(
-                collection_name=self.collection_name,
-                points=[
-                    PointStruct(
-                        id=qdrant_uuid,
-                        vector=vector,
-                        payload={
-                            "user_id": str(user.id),
-                            "memory_id": str(memory_uuid),
-                            "category": data.category,
-                            "importance": importance_score
-                        }
-                    )
-                ]
-            )
-            
-            return MemoryResponse.model_validate(db_memory)
+        qdrant_uuid = str(uuid.uuid4())
+        memory_uuid = uuid.uuid4()
+        
+        # Store in PostgreSQL
+        db_memory = Memory(
+            id=memory_uuid,
+            user_id=user.id,
+            title=data.title,
+            content=data.content,
+            category=data.category,
+            importance_score=importance_score,
+            # Link to the Qdrant Point UUID
+            embedding_id=uuid.UUID(qdrant_uuid)
+        )
+        db.add(db_memory)
+        
+        # Audit log in Embedding table
+        db_embed = Embedding(
+            memory_id=memory_uuid,
+            vector_id=uuid.UUID(qdrant_uuid),
+            embedding_model="text-embedding-004"
+        )
+        db.add(db_embed)
+        
+        await db.commit()
+        await db.refresh(db_memory)
+        
+        # 3. Store in Qdrant
+        # We store the memory_id and user_id in the payload for fast reverse-lookups and secure filtering
+        self.qdrant.upsert(
+            collection_name=self.collection_name,
+            points=[
+                PointStruct(
+                    id=qdrant_uuid,
+                    vector=vector,
+                    payload={
+                        "user_id": str(user.id),
+                        "memory_id": str(memory_uuid),
+                        "category": data.category,
+                        "importance": importance_score
+                    }
+                )
+            ]
+        )
+        
+        return MemoryResponse.model_validate(db_memory)
 
-    async def search_memory(self, user: User, request: MemorySearchRequest) -> list[MemoryResponse]:
+    async def search_memory(self, user: User, request: MemorySearchRequest, db: AsyncSession) -> list[MemoryResponse]:
         """Perform a semantic search for memories belonging to this user."""
         
         query_vector = await self._generate_embedding(request.query)
@@ -166,23 +165,21 @@ class MemoryService:
         memory_ids = [uuid.UUID(res.payload["memory_id"]) for res in search_results if res.payload]
         
         # Fetch the full metadata from PostgreSQL
-        async with AsyncSessionLocal() as db:
-            stmt = select(Memory).where(Memory.id.in_(memory_ids))
-            result = await db.execute(stmt)
-            memories = result.scalars().all()
-            
-            # Keep Qdrant's relevance ordering
-            memories_by_id = {m.id: m for m in memories}
-            ordered_memories = [memories_by_id[m_id] for m_id in memory_ids if m_id in memories_by_id]
-            
-            return [MemoryResponse.model_validate(m) for m in ordered_memories]
+        stmt = select(Memory).where(Memory.id.in_(memory_ids))
+        result = await db.execute(stmt)
+        memories = result.scalars().all()
+        
+        # Keep Qdrant's relevance ordering
+        memories_by_id = {m.id: m for m in memories}
+        ordered_memories = [memories_by_id[m_id] for m_id in memory_ids if m_id in memories_by_id]
+        
+        return [MemoryResponse.model_validate(m) for m in ordered_memories]
 
-    async def get_memories(self, user: User, limit: int = 50) -> list[MemoryResponse]:
+    async def get_memories(self, user: User, db: AsyncSession, limit: int = 50) -> list[MemoryResponse]:
         """Fetch the most recent memories for a user."""
-        async with AsyncSessionLocal() as db:
-            stmt = select(Memory).where(Memory.user_id == user.id).order_by(Memory.created_at.desc()).limit(limit)
-            result = await db.execute(stmt)
-            memories = result.scalars().all()
-            return [MemoryResponse.model_validate(m) for m in memories]
+        stmt = select(Memory).where(Memory.user_id == user.id).order_by(Memory.created_at.desc()).limit(limit)
+        result = await db.execute(stmt)
+        memories = result.scalars().all()
+        return [MemoryResponse.model_validate(m) for m in memories]
 
 memory_service = MemoryService()

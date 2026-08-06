@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
@@ -11,14 +12,15 @@ router = APIRouter()
 @router.post("/", response_model=MemoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_memory(
     request: MemoryCreate,
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
 ):
     """
     Store a new memory. The system will automatically evaluate its importance
     and generate a semantic embedding before saving it to Qdrant and PostgreSQL.
     """
     try:
-        return await memory_service.save_memory(current_user, request)
+        return await memory_service.save_memory(current_user, request, db)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -27,13 +29,14 @@ async def create_memory(
 
 @router.get("/", response_model=List[MemoryResponse])
 async def get_memories(
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
 ):
     """
     Fetch the most recent memories for the user.
     """
     try:
-        return await memory_service.get_memories(current_user)
+        return await memory_service.get_memories(current_user, db)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -43,13 +46,14 @@ async def get_memories(
 @router.post("/search", response_model=List[MemoryResponse])
 async def search_memories(
     request: MemorySearchRequest,
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
 ):
     """
     Perform a semantic search across the user's memories using vector similarity.
     """
     try:
-        return await memory_service.search_memory(current_user, request)
+        return await memory_service.search_memory(current_user, request, db)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

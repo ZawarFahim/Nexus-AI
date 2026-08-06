@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from typing import List
 import uuid
@@ -18,7 +19,8 @@ class FileResponse(BaseModel):
 @router.post("/upload", response_model=FileResponse)
 async def upload_file(
     file: UploadFile = File(...),
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
 ):
     """
     Upload a file, extract text, and index it into the RAG pipeline.
@@ -52,18 +54,16 @@ async def upload_file(
 
     # Save to Database
     from app.models.file import FileMetadata
-    from app.db.session import AsyncSessionLocal
     
-    async with AsyncSessionLocal() as db:
-        new_file = FileMetadata(
-            user_id=current_user.id,
-            filename=file.filename,
-            file_type=file.content_type,
-            size_bytes=len(content),
-            qdrant_document_id=document_id
-        )
-        db.add(new_file)
-        await db.commit()
+    new_file = FileMetadata(
+        user_id=current_user.id,
+        filename=file.filename,
+        file_type=file.content_type,
+        size_bytes=len(content),
+        qdrant_document_id=document_id
+    )
+    db.add(new_file)
+    await db.commit()
 
     return FileResponse(
         document_id=document_id,

@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -17,34 +18,40 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.get("/workflows")
-async def get_dashboard_workflows(current_user: User = Depends(deps.get_current_user)):
+async def get_dashboard_workflows(
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
+):
     """Fetch latest workflows for the dashboard."""
-    async with AsyncSessionLocal() as db:
-        stmt = select(Workflow).where(Workflow.user_id == current_user.id).order_by(Workflow.started_at.desc()).limit(5)
-        result = await db.execute(stmt)
-        workflows = result.scalars().all()
-        
-        return [{"id": str(w.id), "name": w.workflow_name, "status": w.status, "time": str(w.started_at)} for w in workflows]
+    stmt = select(Workflow).where(Workflow.user_id == current_user.id).order_by(Workflow.started_at.desc()).limit(5)
+    result = await db.execute(stmt)
+    workflows = result.scalars().all()
+    
+    return [{"id": str(w.id), "name": w.workflow_name, "status": w.status, "time": str(w.started_at)} for w in workflows]
 
 @router.get("/tasks")
-async def get_dashboard_tasks(current_user: User = Depends(deps.get_current_user)):
+async def get_dashboard_tasks(
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
+):
     """Fetch latest pending tasks for the dashboard."""
-    async with AsyncSessionLocal() as db:
-        stmt = select(Task).where(Task.user_id == current_user.id, Task.status != "Completed").order_by(Task.due_date.asc()).limit(5)
-        result = await db.execute(stmt)
-        tasks = result.scalars().all()
-        
-        return [{"id": str(t.id), "title": t.title, "priority": t.priority, "status": t.status} for t in tasks]
+    stmt = select(Task).where(Task.user_id == current_user.id, Task.status != "Completed").order_by(Task.due_date.asc()).limit(5)
+    result = await db.execute(stmt)
+    tasks = result.scalars().all()
+    
+    return [{"id": str(t.id), "title": t.title, "priority": t.priority, "status": t.status} for t in tasks]
 
 @router.get("/files")
-async def get_dashboard_files(current_user: User = Depends(deps.get_current_user)):
+async def get_dashboard_files(
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
+):
     """Fetch recently uploaded files for the dashboard."""
-    async with AsyncSessionLocal() as db:
-        stmt = select(FileMetadata).where(FileMetadata.user_id == current_user.id).order_by(FileMetadata.created_at.desc()).limit(5)
-        result = await db.execute(stmt)
-        files = result.scalars().all()
-        
-        return [{"id": str(f.id), "filename": f.filename, "type": f.file_type, "size": f.size_bytes, "created_at": str(f.created_at)} for f in files]
+    stmt = select(FileMetadata).where(FileMetadata.user_id == current_user.id).order_by(FileMetadata.created_at.desc()).limit(5)
+    result = await db.execute(stmt)
+    files = result.scalars().all()
+    
+    return [{"id": str(f.id), "filename": f.filename, "type": f.file_type, "size": f.size_bytes, "created_at": str(f.created_at)} for f in files]
 
 @router.get("/emails")
 async def get_dashboard_emails(current_user: User = Depends(deps.get_current_user)):
