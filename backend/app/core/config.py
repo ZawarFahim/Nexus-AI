@@ -35,13 +35,11 @@ class Settings(BaseSettings):
 
     # Tools Configuration
     GITHUB_ACCESS_TOKEN: str = ""
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
     N8N_BASE_URL: str = "http://localhost:5678"
     N8N_API_KEY: str = ""
-
-
-
-
-
+    N8N_WEBHOOK_URL: str = "http://localhost:5678/webhook"
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True)
 
