@@ -38,8 +38,29 @@ async def get_dashboard_tasks(
     stmt = select(Task).where(Task.user_id == current_user.id, Task.status != "Completed").order_by(Task.due_date.asc()).limit(5)
     result = await db.execute(stmt)
     tasks = result.scalars().all()
-    
     return [{"id": str(t.id), "title": t.title, "priority": t.priority, "status": t.status} for t in tasks]
+
+@router.put("/tasks/{task_id}")
+async def update_dashboard_task(
+    task_id: str,
+    status: dict,
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(deps.get_db)
+):
+    """Update task status from dashboard."""
+    stmt = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
+    result = await db.execute(stmt)
+    task = result.scalar_one_or_none()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    new_status = status.get("status")
+    if new_status:
+        task.status = new_status
+        await db.commit()
+        
+    return {"message": "Task updated successfully", "status": task.status}
 
 @router.get("/files")
 async def get_dashboard_files(
