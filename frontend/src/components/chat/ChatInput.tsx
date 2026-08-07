@@ -82,10 +82,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onAudioSend, disab
 
   return (
     <div className="relative flex items-end w-full max-w-4xl mx-auto bg-background/80 backdrop-blur-xl border rounded-2xl p-2 shadow-sm focus-within:ring-1 focus-within:ring-primary transition-all">
-      <Button variant="ghost" size="icon" className="shrink-0 rounded-full text-muted-foreground hover:text-foreground">
-        <Paperclip className="h-5 w-5" />
-      </Button>
-      
       <Textarea
         ref={textareaRef}
         value={value}

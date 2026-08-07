@@ -87,7 +87,25 @@ export const TaskWidget = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="flex items-start gap-3 group cursor-pointer"
-                      onClick={() => setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))}
+                      onClick={async () => {
+                        const newStatus = !task.completed;
+                        // Optimistic UI update
+                        setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: newStatus } : t));
+                        try {
+                          await fetch(`${API_BASE_URL}/dashboard/tasks/${task.id}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                            },
+                            body: JSON.stringify({ status: newStatus ? 'Completed' : 'Pending' })
+                          });
+                        } catch (e) {
+                          console.error('Failed to update task:', e);
+                          // Revert on failure
+                          setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: task.completed } : t));
+                        }
+                      }}
                     >
                       <div className="mt-0.5 shrink-0 transition-transform group-hover:scale-110">
                         {task.completed ? (

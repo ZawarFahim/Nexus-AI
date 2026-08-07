@@ -61,10 +61,6 @@ export default function MemoryPage() {
             </h1>
             <p className="text-muted-foreground mt-1">Facts, preferences, and context securely saved for your AI.</p>
           </div>
-          <Button className="shrink-0 gap-2 shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4" />
-            Add Memory
-          </Button>
         </div>
 
         {error && (

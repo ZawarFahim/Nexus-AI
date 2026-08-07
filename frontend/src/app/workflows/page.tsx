@@ -52,10 +52,6 @@ export default function WorkflowsPage() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Workflows</h1>
             <p className="text-muted-foreground mt-1">Automate tasks across your apps using n8n.</p>
           </div>
-          <Button className="shrink-0 gap-2 shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4" />
-            New Workflow
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -67,7 +63,7 @@ export default function WorkflowsPage() {
               transition={{ delay: idx * 0.1 }}
               whileHover={{ y: -5 }}
             >
-              <Card className="h-full bg-card/60 backdrop-blur-xl border-border/50 hover:shadow-xl transition-all duration-300 relative overflow-hidden group cursor-pointer">
+              <Card className="h-full bg-card/60 backdrop-blur-xl border-border/50 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
                 {wf.status === 'active' && (
                   <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-green-500/20 transition-all" />
                 )}

@@ -73,7 +73,7 @@ export const EmailWidget = () => {
               </div>
             ) : (
               emails.map((email) => (
-                <div key={email.id} className="py-3 flex items-center justify-between group cursor-pointer">
+                <div key={email.id} className="py-3 flex items-center justify-between">
                   <div>
                     <p className={`text-sm ${email.unread ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
                       {email.sender}
@@ -84,7 +84,6 @@ export const EmailWidget = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-muted-foreground">{email.time}</span>
-                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                   </div>
                 </div>
               ))
