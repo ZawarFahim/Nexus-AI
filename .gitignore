@@ -1,77 +1,47 @@
-# -----------------------------
-# General
-# -----------------------------
-.DS_Store
-*.swp
-*~
-.idea/
-.vscode/
-
-# -----------------------------
-# Environments & Secrets
-# -----------------------------
+# --- Secrets ---------------------------------------------------------------
 .env
-.env.*
-!.env.example
-*.pem
 *.key
 
-# -----------------------------
-# Frontend (Next.js / Node)
-# -----------------------------
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.pnpm-store
+# --- Virtual environment ---------------------------------------------------
+.venv/
+venv/
 
-# Next.js build output
-frontend/.next/
-frontend/out/
-
-# Vercel
-.vercel
-
-# -----------------------------
-# Backend (Python / FastAPI)
-# -----------------------------
+# --- Python ----------------------------------------------------------------
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-
-# Environments
-.venv/
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# pytest
+*.egg-info/
 .pytest_cache/
-.coverage
-coverage.xml
-htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Models, voices, and vendored binaries (fetched by scripts/setup) ------
+models/
+voices/
+vendor/
+*.onnx
+*.onnx.json
+*.bin
+
+# --- Build artifacts -------------------------------------------------------
+build/
+dist/
+Output/
+# Bruno.spec is the build recipe and is committed. PyInstaller also writes
+# throwaway .spec files next to whatever it is told to build; those are not.
+*.spec
+!Nexus.spec
+
+# --- Runtime scratch -------------------------------------------------------
+logs/
 *.log
+recordings/
+*.wav
 
-# uv
-uv.lock
+# --- Editors & OS ----------------------------------------------------------
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
 
-# -----------------------------
-# Databases & Volumes (Docker)
-# -----------------------------
-pgdata/
-redisdata/
-qdrantdata/
-n8ndata/
-
-# Local Databases
-*.db
-*.sqlite3
+# --- Generated at build time ----------------------------------------------
+assets/*.ico
