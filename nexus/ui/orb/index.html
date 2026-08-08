@@ -1,0 +1,41 @@
+<!doctype html>
+<!--
+  The orb window's page. Deliberately self-contained: no fonts, no CDN, no
+  build step. Bruno has to work offline and start instantly, and a page that
+  waits on a network request does neither.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bruno</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      /* Pure black, which the host window punches out as transparent. It has
+         to be exactly black: the key matches on equality, and #010101 would
+         leave a visible card. See TRANSPARENT_KEY in window.py. */
+      background: #000000;
+      /* The window must never take focus or swallow a click: Bruno's browser
+         control acts on whichever window is in front, and an orb that steals
+         that would make "scroll down" target the orb instead of the page. */
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: default;
+    }
+    #orb {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="orb"></canvas>
+  <script src="orb.js"></script>
+</body>
+</html>
