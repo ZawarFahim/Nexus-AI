@@ -144,5 +144,4 @@ Nexus is designed around a modular protocol system (`nexus/core/protocols.py`). 
 - **Voice Activity Detection:** [Silero VAD](https://github.com/snakers4/silero-vad)
 - **AI Brains:** [Groq](https://groq.com), [Cerebras](https://cerebras.ai), and [Google Gemini](https://ai.google.dev)
 
-## 📄 License
-Released under the MIT License. See [LICENSE](LICENSE) for details.
+
