@@ -1,0 +1,13 @@
+# Optional GPU acceleration for speech recognition.
+#
+# Only useful with an NVIDIA GPU. Installing this swaps Nexus from base.en on the
+# CPU (~600 ms per utterance) to distil-large-v3 on CUDA (~250 ms, and
+# noticeably better with names and technical vocabulary).
+#
+#   pip install -r requirements.txt -r requirements-gpu.txt
+#
+# Roughly 700 MB of libraries plus a 1.5 GB model on first run. Nothing else
+# changes: Nexus detects the runtime at startup and selects the model itself.
+
+nvidia-cublas-cu12
+nvidia-cudnn-cu12>=9,<10
