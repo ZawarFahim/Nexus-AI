@@ -96,6 +96,9 @@ ALT_SPACE: Final = Chord(win32.VK_SPACE, frozenset({Modifier.ALT}))
 CTRL_ALT_SPACE: Final = Chord(
     win32.VK_SPACE, frozenset({Modifier.CTRL, Modifier.ALT})
 )
+ALT_SHIFT_SPACE: Final = Chord(
+    win32.VK_SPACE, frozenset({Modifier.ALT, Modifier.SHIFT})
+)
 
 
 class HotkeyListener:

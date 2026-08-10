@@ -22,7 +22,7 @@ from nexus.core.config import Settings
 from nexus.core.profile import Profile
 from nexus.core.state import State, StateMachine
 from nexus.hands_free import HandsFreeMode
-from nexus.input.hotkey import ALT_SPACE, CTRL_ALT_SPACE, HotkeyListener
+from nexus.input.hotkey import ALT_SPACE, CTRL_ALT_SPACE, ALT_SHIFT_SPACE, HotkeyListener
 from nexus.llm.conversation import Conversation
 from nexus.llm.factory import create_provider
 from nexus.llm.prompt import build_system_prompt
@@ -34,6 +34,7 @@ from nexus.tools.screen import screen_tool
 from nexus.tools.desktop import desktop_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
+from nexus.ui.command import CommandWindow
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class Components:
     hands_free: HandsFreeMode
     hotkeys: HotkeyListener
     orb: OrbController
+    command_window: CommandWindow
     state: StateMachine
 
 
@@ -162,9 +164,13 @@ def build(
     hotkeys = HotkeyListener()
     hotkeys.register(ALT_SPACE, pipeline.on_press, pipeline.on_release)
     hotkeys.register(CTRL_ALT_SPACE, toggle_hands_free)
+    
+    command_window = CommandWindow(pipeline)
+    hotkeys.register(ALT_SHIFT_SPACE, command_window.show)
 
     orb = OrbController(enabled=settings.show_orb)
     state.subscribe(orb.on_state)
+    state.subscribe(command_window.on_state)
 
     def show_microphone_level(block) -> None:
         """Feed the orb from the audio thread.
@@ -195,6 +201,7 @@ def build(
         hands_free=hands_free,
         hotkeys=hotkeys,
         orb=orb,
+        command_window=command_window,
         state=state,
     )
 
