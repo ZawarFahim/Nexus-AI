@@ -31,6 +31,7 @@ from nexus.stt.whisper import WhisperTranscriber
 from nexus.tools import browser
 from nexus.tools.registry import ToolRegistry
 from nexus.tools.screen import screen_tool
+from nexus.tools.desktop import desktop_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
 
@@ -73,6 +74,8 @@ def build_tools(settings: Settings) -> ToolRegistry | None:
     if settings.allow_browser:
         registry.add(browser.open_tool())
         registry.add(browser.control_tool())
+    # Desktop automation is always added if enabled, but for now we'll just add it.
+    registry.add(desktop_tool())
 
     if not len(registry):
         logger.info("No tools enabled; Nexus can only talk")
