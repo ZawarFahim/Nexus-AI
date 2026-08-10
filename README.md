@@ -1,150 +1,91 @@
-# Nexus: Your Desktop Voice Companion
+# Nexus: Your Desktop AI Companion
 
-Nexus is a lightning-fast, intelligent voice assistant that lives right in your Windows system tray. Simply hold down a hotkey, speak your mind, and Nexus will respond out loud in mere seconds.
+Nexus is an intelligent, lightning-fast assistant that lives in your Windows system tray. Designed for seamless interaction, Nexus responds out loud in seconds to your voice commands, or silently to your typed text commands. 
 
-Unlike traditional text-based AI, Nexus is built for seamless audio interaction. It can even see your screen and control your web browser—but only when you explicitly ask it to.
+Equipped with screen vision and automation tools, Nexus can see what you see and seamlessly drive your desktop and web browser on your behalf.
 
+---
+
+## ✨ Core Capabilities
+
+### 🎙️ Voice & Text Interface
+- **Push-to-Talk Voice:** Hold `Alt+Space`, speak your request, and release. Nexus replies audibly with low-latency streaming TTS.
+- **Native Text Commands:** Press `Alt+Shift+Space` to instantly open a floating, native desktop window. Type your commands for a silent, text-only conversation that bypasses speech processing.
+- **Hands-Free Mode:** Press `Ctrl+Alt+Space` to toggle an always-listening mode that automatically detects when you stop talking.
+- **Instant Interruptions:** Press the hotkey again at any time to instantly silence a long response.
+
+### 👁️ Screen Vision
+Nexus can "see" your active screen to answer context-specific questions. Ask *"What does this error say?"* or *"Where am I on this map?"*, and Nexus takes a temporary screenshot to analyze and respond intelligently.
+
+### ⚙️ Computer & Browser Automation
+- **Desktop Control:** Nexus can locate applications, open software, type text, and manipulate windows. Try saying: *"Open Spotify and play Blinding Lights"* or *"Open VS Code"*. High-risk actions will prompt for your explicit approval first.
+- **Browser Automation:** Say *"Open YouTube"* or *"Search for a recipe"*. Nexus directly commands your existing, authenticated browser sessions rather than launching isolated environments.
+
+### 🛡️ Privacy & Resilience
+- **Zero Idle Recording:** Nexus only listens when you explicitly engage a hotkey.
+- **On-Device Speech:** Voice recognition is handled entirely on your local hardware using `faster-whisper`.
+- **API Fallbacks:** Configure multiple LLM providers (Groq, Cerebras, Gemini). If one hits a rate limit, Nexus seamlessly falls back to the next available API key.
+
+---
+
+## 🚀 Installation
+
+**Requirements:** Windows 10/11, Python 3.12+
+
+```bash
+# 1. Clone the repository and navigate to the folder
+git clone https://github.com/your-username/nexus.git
+cd nexus
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Download local voice models (approx 200MB)
+python -m scripts.setup
 ```
-You     Alt+Space   "What am I looking at right now?"
-Nexus               "You've got the Kendrick Lamar halftime show open on YouTube.
-                     Looks like you're about halfway through."
 
-You                 "Scroll down a bit."
-Nexus               "Done. What are you looking for?"
+### Configuration
+Nexus handles listening and speaking locally, but delegates "thinking" to cloud LLMs. 
+1. Copy `.env.example` to `.env`.
+2. Generate an API Key (e.g., from [Groq](https://console.groq.com/keys) or [Gemini](https://aistudio.google.com/apikey)).
+3. Paste the key into your `.env` file and set your preferred provider.
+
+### Running Nexus
+```bash
+python -m nexus
 ```
+Nexus will launch into your system tray! *(Note: Windows 11 may hide new icons. Check the `^` arrow next to your clock).*
 
 ---
 
-## 🌟 Core Features
+## 🎮 Cheat Sheet
 
-**Instant Voice Responses.** Hold down `Alt+Space`, speak your request, and let go. Nexus will reply audibly. Thanks to its streaming architecture, it begins speaking its first sentence while still processing the rest, meaning you never have to wait for long answers to generate. For a completely hands-free experience, toggle `Ctrl+Alt+Space` and it will automatically detect when you stop talking.
-
-**See your screen.** Ask "what does this error say", "what's playing", "where am I", or anything that would only make sense to someone in the room with you, and Nexus takes a screenshot and answers from it.
-
-**Control your computer.** Ask Nexus to open apps, type text, or automate clicks. "Open Spotify and play Blinding Lights", "Open VS Code", or "Type this text into Notepad." It dynamically finds your apps and navigates UI using Windows automation. High-risk actions like running terminal commands will explicitly ask for your permission first.
-
-**Browser Automation.** Nexus can navigate the web for you. Say "Open YouTube", "Search for a recipe", "Scroll down", or "Go back". It directly drives your existing browser—complete with your active tabs and logged-in sessions—rather than launching a detached, isolated browser window.
-
-**Instant Interruptions.** If Nexus is giving a long answer and you already got what you needed, just press the hotkey again to instantly cut it off.
-
-**Resilient API Fallbacks.** Free AI provider tiers often come with strict daily limits. Nexus solves this by allowing you to configure multiple API keys. If one provider hits a rate limit, Nexus seamlessly falls back to the next available service, ensuring you are never left without your assistant.
-
----
-
-## 🛡️ Privacy & Security First
-
-Nexus is designed to respect your privacy and run locally as much as possible:
-
-- **No Always-Listening Wake Words.** Nexus only listens when you physically hold down the hotkey (or enable hands-free mode). Nothing is ever recorded or transmitted while idle.
-- **On-Demand Vision.** Nexus only captures your screen when you specifically ask a question that requires visual context. There is no background recording or screen history. Every single capture is logged transparently.
-- **Local Speech Recognition.** Your voice is processed locally on your machine using `faster-whisper`. Only the transcribed text (and authorized screenshots) are sent to the AI service.
-- **Secure Credentials.** Your API keys are encrypted using your Windows account credentials and stored safely on your local device. Nexus does not have access to your personal files, clipboard, or emails.
-
----
-
-## 🚀 Installation & Setup
-
-**Requires Windows 10 or 11** and **Python 3.12**.
-
-1. Clone or download this repository to your machine.
-2. Open a terminal (like PowerShell) in the project folder.
-3. Create a virtual environment and activate it:
-   ```bash
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
-   ```
-4. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   *(Note: If you have an NVIDIA GPU, you can also install `requirements-gpu.txt` for hardware-accelerated speech recognition.)*
-5. Run the one-time setup script to download the voice models (about 200MB):
-   ```bash
-   python -m scripts.setup
-   ```
-6. Set up your API key by copying `.env.example` to `.env` and adding your key (e.g., Gemini, Groq, or Cerebras).
-7. Start Nexus:
-   ```bash
-   python -m nexus
-   ```
-
-Look for the Nexus orb icon in your system tray! *(Note: Windows 11 often hides new tray icons. Click the `^` arrow next to your clock and drag the Nexus icon onto your taskbar to keep it visible.)*
-
----
-
-## 🔑 AI Providers (Getting a Free API Key)
-
-Nexus handles the listening and speaking locally, but the heavy "thinking" is delegated to cloud LLMs. You will need a free API key for at least one of the supported providers.
-
-### Recommended: Groq
-Groq provides blazing fast inference and supports screen vision.
-1. Visit **[console.groq.com/keys](https://console.groq.com/keys)**
-2. Sign in (no credit card required).
-3. Generate a new API Key and paste it into your `.env` file under `GROQ_API_KEY`. Set `NEXUS_LLM_PROVIDER=groq`.
-
-### Supported Alternatives
-Add backup keys to ensure uninterrupted service!
-| Service | Highlights | Vision Support |
-|---|---|---|
-| **[Groq](https://console.groq.com/keys)** | Extremely fast, generous free tier | Yes |
-| **[Cerebras](https://cloud.cerebras.ai)** | Massive daily token limits | No (Text Only) |
-| **[Google Gemini](https://aistudio.google.com/apikey)** | Excellent vision reasoning | Yes |
-
-*Pro-tip for Cerebras:* Ensure you generate your API key using a **Personal** account. Team accounts often trigger "payment required" errors on the free tier.
-
----
-
-## 🎮 How to Use Nexus
-
-| Action | Shortcut / Method |
+| Action | Shortcut |
 |---|---|
+| **Voice Command** | Hold `Alt+Space` |
 | **Push-to-Talk** | Hold `Alt+Space`, speak, and release |
+| **Text Command** | Press `Alt+Shift+Space` to open the text interface |
 | **Hands-Free Mode** | Press `Ctrl+Alt+Space` to toggle |
 | **Interrupt Nexus** | Press `Alt+Space` while it is speaking |
 | **Settings / Quit** | Right-click the system tray icon |
 
-The system tray icon and the optional floating orb provide visual feedback on Nexus's state: 
-- **Grey:** Idle
-- **Blue:** Listening to you
-- **Amber:** Processing / Thinking
-- **Green:** Speaking
-
 ### Example Prompts
 - *"What error message is on my screen right now?"*
-- *"Open Spotify and play Blinding Lights."*
-- *"Open VS Code and open my Nexus project."*
+- *"Open Spotify and play some music."*
 - *"Open a new tab and search for Python tutorials."*
-- *"Scroll down a bit."*
 - *"Minimize Chrome and focus Notepad."*
-
----
-
-## 🛠️ Advanced Usage & Architecture
-
-### Command Line Flags
-You can run Nexus with various flags for debugging or configuration:
-```bash
-python -m nexus --console             # Show a terminal with verbose logging
-python -m nexus --name Zawar          # Change what the assistant calls you
-python -m nexus --providers           # List available AI services
-```
-Your configuration, logs, and encrypted keys are stored safely at `%LOCALAPPDATA%\Nexus`.
-
-### How It Works Under the Hood
-```text
-Hotkey ──► Microphone ──► Local Whisper ──► AI Service ──► Local Piper ──► Speakers
-            (Active        (Transcribes     (Reasoning &    (Streams TTS    (Plays
-             Buffer)        Audio)           Tools)          by sentence)    Audio)
-```
-Nexus is designed around a modular protocol system (`nexus/core/protocols.py`). You can easily swap out the speech recognizer, AI backend, or TTS engine by modifying a single line in `nexus/app.py`. New features and capabilities can be added seamlessly by dropping new tools into the `nexus/tools/` directory.
 
 ---
 
 ## ⚙️ Technology Stack
 
-- **Speech Recognition:** [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
-- **Text-to-Speech:** [Piper](https://github.com/rhasspy/piper)
-- **Voice Activity Detection:** [Silero VAD](https://github.com/snakers4/silero-vad)
-- **AI Brains:** [Groq](https://groq.com), [Cerebras](https://cerebras.ai), and [Google Gemini](https://ai.google.dev)
-
-
+- **Speech Recognition:** [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (Local)
+- **Text-to-Speech:** [Piper](https://github.com/rhasspy/piper) (Local)
+- **Voice Activity Detection:** [Silero VAD](https://github.com/snakers4/silero-vad) (Local)
+- **Native UI:** `tkinter` & `pystray`
+- **Automation:** `pywinauto` (Desktop) & `playwright` (Browser)
+- **AI Backend:** Modulable protocol supporting Groq, Cerebras, and Google Gemini.
