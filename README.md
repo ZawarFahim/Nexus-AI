@@ -19,7 +19,9 @@ Nexus               "Done. What are you looking for?"
 
 **Instant Voice Responses.** Hold down `Alt+Space`, speak your request, and let go. Nexus will reply audibly. Thanks to its streaming architecture, it begins speaking its first sentence while still processing the rest, meaning you never have to wait for long answers to generate. For a completely hands-free experience, toggle `Ctrl+Alt+Space` and it will automatically detect when you stop talking.
 
-**Screen Awareness.** Need help with something you're looking at? Ask "What does this error message mean?", "What video is this?", or "Where am I?". Nexus will securely take a temporary screenshot and analyze the context to give you a highly relevant answer.
+**See your screen.** Ask "what does this error say", "what's playing", "where am I", or anything that would only make sense to someone in the room with you, and Nexus takes a screenshot and answers from it.
+
+**Control your computer.** Ask Nexus to open apps, type text, or automate clicks. "Open Spotify and play Blinding Lights", "Open VS Code", or "Type this text into Notepad." It dynamically finds your apps and navigates UI using Windows automation. High-risk actions like running terminal commands will explicitly ask for your permission first.
 
 **Browser Automation.** Nexus can navigate the web for you. Say "Open YouTube", "Search for a recipe", "Scroll down", or "Go back". It directly drives your existing browser—complete with your active tabs and logged-in sessions—rather than launching a detached, isolated browser window.
 
@@ -109,10 +111,11 @@ The system tray icon and the optional floating orb provide visual feedback on Ne
 
 ### Example Prompts
 - *"What error message is on my screen right now?"*
+- *"Open Spotify and play Blinding Lights."*
+- *"Open VS Code and open my Nexus project."*
 - *"Open a new tab and search for Python tutorials."*
 - *"Scroll down a bit."*
-- *"What song is currently playing on Spotify?"*
-- *"Summarize the text in this browser window."*
+- *"Minimize Chrome and focus Notepad."*
 
 ---
 
