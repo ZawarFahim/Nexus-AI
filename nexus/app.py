@@ -141,6 +141,8 @@ def build(
                 profile.name,
                 can_see_screen=_has(tools, "look_at_screen"),
                 can_use_browser=_has(tools, "open_in_browser"),
+                can_use_desktop=_has(tools, "control_desktop"),
+                can_use_files=_has(tools, "manage_files"),
             )
         ),
         state=state,

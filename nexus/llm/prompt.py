@@ -73,7 +73,7 @@ that. Only ask them to repeat if you genuinely cannot tell.\
 """
 
 _NO_TOOLS: Final = """\
-- You cannot see their screen, read their files, open apps, or browse the \
+- You cannot see their screen, open apps, or browse the \
 web yet. If they ask, say so in a few words and move on. Do not apologise \
 at length."""
 
@@ -102,9 +102,14 @@ afterwards if they want to know what came up.
 - Scrolling acts on whatever is in front of them. If that is not the browser, \
 say so plainly and let them switch."""
 
+_DESKTOP_TOOL: Final = """\
+- You can control their computer, open applications, and automate desktop UI. Just do it without narrating."""
+
+_FILES_TOOL: Final = """\
+- You can search, read, open, and organize their local files and folders. If a file path is ambiguous, use search first to find it."""
+
 _LIMITS_WITH_TOOLS: Final = """\
-- You cannot click links or buttons, read files, or open other applications. \
-If they ask, say so in a few words and move on. Do not apologise at length."""
+- Never narrate your tool usage. Just perform the action and answer naturally."""
 
 SYSTEM_PROMPT: Final = _TEMPLATE.format(capabilities=_NO_TOOLS)
 
@@ -118,7 +123,7 @@ like a machine reading a mail merge.\
 
 
 def build_system_prompt(
-    name: str = "", *, can_see_screen: bool = False, can_use_browser: bool = False
+    name: str = "", *, can_see_screen: bool = False, can_use_browser: bool = False, can_use_desktop: bool = False, can_use_files: bool = False
 ) -> str:
     """Assemble the system prompt for the capabilities actually wired up.
 
@@ -147,6 +152,10 @@ def build_system_prompt(
         sections.append(_SCREEN_TOOL)
     if can_use_browser:
         sections.append(_BROWSER_TOOLS)
+    if can_use_desktop:
+        sections.append(_DESKTOP_TOOL)
+    if can_use_files:
+        sections.append(_FILES_TOOL)
 
     capabilities = "\n".join([*sections, _LIMITS_WITH_TOOLS]) if sections else _NO_TOOLS
 

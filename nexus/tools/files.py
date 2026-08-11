@@ -98,7 +98,11 @@ def _search(
         Path.home() / "Downloads",
         Path.home() / "Pictures",
         Path.home() / "Videos",
+        Path.cwd()
     ]
+    
+    # Also include the root of the current drive as a fallback if they ask for a project folder
+    roots.append(Path(Path.cwd().anchor))
     
     for root_dir in roots:
         if not root_dir.exists(): continue
