@@ -18,6 +18,7 @@ class DesktopWindow:
         self.pipeline = pipeline
         self.history: list[str] = []
         self.history_idx: int = -1
+        self._active_cards = {}
         
         self._ready_event = threading.Event()
         self._thread = threading.Thread(target=self._run_tk, daemon=True, name="ev-desktop-ui")
@@ -31,8 +32,6 @@ class DesktopWindow:
         
         if getattr(self.pipeline, "_tools", None) and hasattr(self.pipeline._tools, "subscribe"):
             self.pipeline._tools.subscribe(self._on_tool_activity)
-            
-        self._active_cards = {}
         
     def _run_tk(self):
         self.root = tk.Tk()
