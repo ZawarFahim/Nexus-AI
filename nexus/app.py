@@ -174,7 +174,7 @@ def build(
 
     orb = OrbController(enabled=settings.show_orb)
     state.subscribe(orb.on_state)
-    # state.subscribe(desktop_window.on_state) # Will be implemented in Commit 2
+    state.subscribe(desktop_window.on_state)
 
     def show_microphone_level(block) -> None:
         """Feed the orb from the audio thread.
