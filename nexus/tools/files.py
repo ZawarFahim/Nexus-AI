@@ -164,13 +164,41 @@ def _verify_path_safe(path_str: str) -> Path:
     p = Path(path_str).resolve()
     if not p.is_absolute():
         raise ValueError("Paths must be absolute.")
+        
+    protected_paths = [
+        Path("C:/Windows").resolve(),
+        Path("C:/Program Files").resolve(),
+        Path("C:/Program Files (x86)").resolve(),
+    ]
+    for prot in protected_paths:
+        if prot in p.parents or p == prot:
+            raise PermissionError(f"Access to protected system path {prot} is denied.")
+            
     return p
+
+HIGH_RISK_OPS = {"delete"}
+MEDIUM_RISK_OPS = {"create_folder", "rename", "move", "copy"}
 
 def _run(arguments: dict[str, Any]) -> ToolResult:
     operation = arguments.get("operation")
     confirmed = arguments.get("confirmed", False)
     
     logger.info(f"[Files] Running operation: {operation}")
+    
+    # Permission check
+    if operation in HIGH_RISK_OPS and not confirmed:
+        return ToolResult(
+            f"Action '{operation}' is HIGH RISK. You must ask the user for confirmation out loud, "
+            "and only retry with 'confirmed: true' if they explicitly agree."
+        )
+        
+    if operation in MEDIUM_RISK_OPS and not confirmed:
+        # Medium risk requires confirmation unless the target is extremely unambiguous.
+        # For safety, if they didn't pass confirmed, we ask.
+        return ToolResult(
+            f"Action '{operation}' modifies the filesystem. Ask the user for confirmation first, "
+            "and only retry with 'confirmed: true' if they explicitly agree."
+        )
     
     result_data = {
         "success": False,

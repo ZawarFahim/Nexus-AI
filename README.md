@@ -17,7 +17,8 @@ Equipped with screen vision and automation tools, Nexus can see what you see and
 ### 👁️ Screen Vision
 Nexus can "see" your active screen to answer context-specific questions. Ask *"What does this error say?"* or *"Where am I on this map?"*, and Nexus takes a temporary screenshot to analyze and respond intelligently.
 
-### ⚙️ Computer & Browser Automation
+### ⚙️ Computer, Browser & File Automation
+- **Smart File Assistant:** Nexus can find, open, create, move, and organize your files using natural language. Try saying *"Find my latest PDF"*, *"Create a folder called Research"*, or *"Move these screenshots into Documents"*.
 - **Desktop Control:** Nexus can locate applications, open software, type text, and manipulate windows. Try saying: *"Open Spotify and play Blinding Lights"* or *"Open VS Code"*. High-risk actions will prompt for your explicit approval first.
 - **Browser Automation:** Say *"Open YouTube"* or *"Search for a recipe"*. Nexus directly commands your existing, authenticated browser sessions rather than launching isolated environments.
 
@@ -75,6 +76,10 @@ Nexus will launch into your system tray! *(Note: Windows 11 may hide new icons. 
 
 ### Example Prompts
 - *"What error message is on my screen right now?"*
+- *"Find my latest PDF."*
+- *"Create a folder called Research in Documents."*
+- *"Move these screenshots into Nexus Screenshots."*
+- *"Find the largest files in Downloads."*
 - *"Open Spotify and play some music."*
 - *"Open a new tab and search for Python tutorials."*
 - *"Minimize Chrome and focus Notepad."*
