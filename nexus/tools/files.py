@@ -2,6 +2,7 @@
 
 import os
 import json
+import shutil
 import logging
 from pathlib import Path
 from typing import Any, Final
@@ -93,6 +94,13 @@ def _search(query: str | None) -> list[dict[str, Any]]:
         
     return results
 
+def _verify_path_safe(path_str: str) -> Path:
+    """Normalize and validate path."""
+    p = Path(path_str).resolve()
+    if not p.is_absolute():
+        raise ValueError("Paths must be absolute.")
+    return p
+
 def _run(arguments: dict[str, Any]) -> ToolResult:
     operation = arguments.get("operation")
     confirmed = arguments.get("confirmed", False)
@@ -111,6 +119,55 @@ def _run(arguments: dict[str, Any]) -> ToolResult:
             results = _search(query)
             result_data["results"] = results
             result_data["success"] = True
+            
+        elif operation == "open":
+            target = _verify_path_safe(arguments.get("target_path", ""))
+            if not target.exists():
+                raise FileNotFoundError(f"File not found: {target}")
+            os.startfile(str(target))
+            result_data["success"] = True
+            result_data["message"] = f"Opened {target.name}"
+            
+        elif operation == "create_folder":
+            target = _verify_path_safe(arguments.get("target_path", ""))
+            if target.exists():
+                result_data["success"] = True
+                result_data["message"] = f"Folder already exists: {target}"
+            else:
+                target.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    result_data["success"] = True
+                    result_data["message"] = f"Created folder: {target}"
+                else:
+                    raise RuntimeError("Verification failed: folder was not created.")
+                    
+        elif operation in ("move", "copy", "rename"):
+            target = _verify_path_safe(arguments.get("target_path", ""))
+            dest = _verify_path_safe(arguments.get("destination_path", ""))
+            
+            if not target.exists():
+                raise FileNotFoundError(f"Source not found: {target}")
+                
+            if dest.exists() and operation == "rename":
+                raise FileExistsError(f"Destination already exists: {dest}")
+                
+            if operation == "copy":
+                shutil.copy2(target, dest)
+                final_dest = dest if dest.is_file() else dest / target.name
+                if final_dest.exists():
+                    result_data["success"] = True
+                    result_data["message"] = f"Copied {target.name} to {dest}"
+                else:
+                    raise RuntimeError("Verification failed: copy did not complete.")
+                    
+            elif operation in ("move", "rename"):
+                shutil.move(str(target), str(dest))
+                final_dest = dest if dest.is_file() else dest / target.name
+                if final_dest.exists() and not target.exists():
+                    result_data["success"] = True
+                    result_data["message"] = f"Moved/Renamed {target.name} to {dest}"
+                else:
+                    raise RuntimeError("Verification failed: move/rename did not complete properly.")
         else:
             result_data["error"] = f"Operation '{operation}' is not fully implemented yet."
             
