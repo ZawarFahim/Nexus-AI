@@ -32,6 +32,7 @@ from nexus.tools import browser
 from nexus.tools.registry import ToolRegistry
 from nexus.tools.screen import screen_tool
 from nexus.tools.desktop import desktop_tool
+from nexus.tools.files import files_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
 from nexus.ui.command import CommandWindow
@@ -78,6 +79,7 @@ def build_tools(settings: Settings) -> ToolRegistry | None:
         registry.add(browser.control_tool())
     # Desktop automation is always added if enabled, but for now we'll just add it.
     registry.add(desktop_tool())
+    registry.add(files_tool())
 
     if not len(registry):
         logger.info("No tools enabled; Nexus can only talk")
