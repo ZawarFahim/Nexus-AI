@@ -42,6 +42,28 @@ PARAMETERS: Final = {
             "type": "string",
             "description": "Search query for filenames (e.g., 'latest PDF'). Required for search."
         },
+        "extensions": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Optional list of extensions to filter (e.g. ['.pdf', '.txt']). Use to find 'Python files', 'documents'."
+        },
+        "min_size_bytes": {
+            "type": "integer",
+            "description": "Optional minimum file size."
+        },
+        "max_size_bytes": {
+            "type": "integer",
+            "description": "Optional maximum file size."
+        },
+        "modified_after": {
+            "type": "number",
+            "description": "Optional timestamp (epoch). Use to find 'files modified today/yesterday'."
+        },
+        "sort_by": {
+            "type": "string",
+            "enum": ["relevance", "size_desc", "size_asc", "modified_desc", "modified_asc"],
+            "description": "How to sort results. E.g. 'size_desc' for 'largest files', 'modified_desc' for 'latest/recent files'."
+        },
         "target_path": {
             "type": "string",
             "description": "Absolute path to the target file or folder for operations."
@@ -58,41 +80,84 @@ PARAMETERS: Final = {
     "required": ["operation"]
 }
 
-def _search(query: str | None) -> list[dict[str, Any]]:
-    """Basic search implementation for Commit 1."""
-    if not query:
-        return []
-        
-    query_lower = query.lower()
+def _search(
+    query: str | None,
+    extensions: list[str] | None = None,
+    min_size: int | None = None,
+    max_size: int | None = None,
+    modified_after: float | None = None,
+    sort_by: str | None = None
+) -> list[dict[str, Any]]:
+    """Smart search implementation for Commit 3."""
+    query_lower = query.lower() if query else ""
     results = []
     
-    # Just search Documents for now as a basic foundation
-    docs_dir = Path.home() / "Documents"
+    roots = [
+        Path.home() / "Desktop",
+        Path.home() / "Documents",
+        Path.home() / "Downloads",
+        Path.home() / "Pictures",
+        Path.home() / "Videos",
+    ]
     
-    try:
-        if docs_dir.exists():
-            for root, _, files in os.walk(docs_dir):
-                for file in files:
-                    if query_lower in file.lower():
-                        full_path = Path(root) / file
-                        try:
-                            stat = full_path.stat()
-                            results.append({
-                                "name": file,
-                                "path": str(full_path),
-                                "size_bytes": stat.st_size,
-                            })
-                        except OSError:
-                            pass
-                        
-                        if len(results) >= 20: # Limit for basic version
-                            break
-                if len(results) >= 20:
-                    break
-    except Exception as e:
-        logger.error(f"[Files] Basic search error: {e}")
+    for root_dir in roots:
+        if not root_dir.exists(): continue
         
-    return results
+        try:
+            for root, dirs, files in os.walk(root_dir):
+                # Don't recurse too deep
+                if len(Path(root).parts) > len(root_dir.parts) + 3:
+                    dirs[:] = []
+                    continue
+                    
+                for file in files:
+                    # Filters
+                    if query_lower and query_lower not in file.lower():
+                        continue
+                    if extensions and not any(file.lower().endswith(ext.lower()) for ext in extensions):
+                        continue
+                        
+                    full_path = Path(root) / file
+                    try:
+                        stat = full_path.stat()
+                        
+                        if min_size is not None and stat.st_size < min_size:
+                            continue
+                        if max_size is not None and stat.st_size > max_size:
+                            continue
+                        if modified_after is not None and stat.st_mtime < modified_after:
+                            continue
+                            
+                        # Basic score based on exact match vs partial match
+                        score = 1.0
+                        if query_lower and query_lower == file.lower():
+                            score = 2.0
+                            
+                        results.append({
+                            "name": file,
+                            "path": str(full_path),
+                            "size_bytes": stat.st_size,
+                            "modified": stat.st_mtime,
+                            "score": score
+                        })
+                    except OSError:
+                        pass
+        except Exception as e:
+            logger.error(f"[Files] Basic search error in {root_dir}: {e}")
+            
+    # Sorting
+    if sort_by == "size_desc":
+        results.sort(key=lambda x: x["size_bytes"], reverse=True)
+    elif sort_by == "size_asc":
+        results.sort(key=lambda x: x["size_bytes"])
+    elif sort_by == "modified_desc":
+        results.sort(key=lambda x: x["modified"], reverse=True)
+    elif sort_by == "modified_asc":
+        results.sort(key=lambda x: x["modified"])
+    else:
+        results.sort(key=lambda x: x["score"], reverse=True)
+        
+    return results[:30] # Limit results
 
 def _verify_path_safe(path_str: str) -> Path:
     """Normalize and validate path."""
@@ -115,8 +180,21 @@ def _run(arguments: dict[str, Any]) -> ToolResult:
     try:
         if operation == "search":
             query = arguments.get("query", "")
+            exts = arguments.get("extensions")
+            min_s = arguments.get("min_size_bytes")
+            max_s = arguments.get("max_size_bytes")
+            mod_a = arguments.get("modified_after")
+            srt = arguments.get("sort_by")
+            
             result_data["query"] = query
-            results = _search(query)
+            results = _search(
+                query=query, 
+                extensions=exts, 
+                min_size=min_s, 
+                max_size=max_s, 
+                modified_after=mod_a, 
+                sort_by=srt
+            )
             result_data["results"] = results
             result_data["success"] = True
             
