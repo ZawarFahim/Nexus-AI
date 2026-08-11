@@ -4,11 +4,12 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import logging
-from typing import Optional
+from typing import Optional, Any
 
 from nexus.pipeline import Pipeline
 from nexus.core.state import State
 from nexus.ui.desktop.theme import COLORS, FONTS
+from nexus.ui.desktop.cards import ToolActivityCard
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,11 @@ class DesktopWindow:
         # Connect to pipeline
         self.pipeline.subscribe_token(self._on_token)
         self.pipeline.subscribe_user_text(self._on_user_text)
+        
+        if getattr(self.pipeline, "_tools", None) and hasattr(self.pipeline._tools, "subscribe"):
+            self.pipeline._tools.subscribe(self._on_tool_activity)
+            
+        self._active_cards = {}
         
     def _run_tk(self):
         self.root = tk.Tk()
@@ -164,10 +170,34 @@ class DesktopWindow:
         self.chat_text.delete(1.0, tk.END)
         welcome = "Ready for command\n\nSpeak or type what you want me to do.\n\n────────────────────────\n\nTry:\n\"Open Spotify\"\n\"Find my latest PDF\"\n\"What's wrong with my screen?\"\n"
         self.chat_text.insert(tk.END, welcome, "user_header")
+        
+        # Add quick actions
+        quick_frame = tk.Frame(self.chat_text, bg=COLORS.BG_MAIN)
+        actions = [
+            ("👁 Analyze Screen", "What am I looking at?"),
+            ("📁 Find File", "Find my latest PDF"),
+            ("🖥 Open App", "Open Spotify")
+        ]
+        
+        for label, cmd in actions:
+            btn = tk.Label(quick_frame, text=f" {label} ", bg=COLORS.BG_BUBBLE_USER, fg=COLORS.FG_PRIMARY, font=(FONTS.FAMILY, FONTS.SIZE_SMALL), cursor="hand2", bd=1, relief=tk.SOLID)
+            btn.pack(side=tk.LEFT, padx=5, pady=10)
+            btn.bind("<Button-1>", lambda e, c=cmd: self._submit_quick_action(c))
+            
+        self.chat_text.window_create(tk.END, window=quick_frame, padx=10, pady=10)
+        self.chat_text.insert(tk.END, "\n")
+        
         self.chat_text.tag_add("center", "1.0", "end")
         self.chat_text.tag_config("center", justify="center")
         self.chat_text.config(state=tk.DISABLED)
         self._is_empty = True
+        self._active_cards.clear()
+
+    def _submit_quick_action(self, cmd: str):
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, cmd)
+        self.entry.focus_set()
+        # Optionally auto-submit: self._on_enter(None)
 
     def _on_user_text(self, text: str):
         if hasattr(self, 'root'):
@@ -176,6 +206,37 @@ class DesktopWindow:
     def _on_token(self, fragment: str):
         if hasattr(self, 'root'):
             self.root.after(0, lambda: self._append_nexus_token(fragment))
+            
+    def _on_tool_activity(self, name: str, status: str, details: Any):
+        if hasattr(self, 'root'):
+            self.root.after(0, lambda: self._handle_tool_activity(name, status, details))
+            
+    def _handle_tool_activity(self, name: str, status: str, details: Any):
+        if status == "started":
+            # Clear empty state if needed
+            if getattr(self, '_is_empty', False):
+                self.chat_text.config(state=tk.NORMAL)
+                self.chat_text.delete(1.0, tk.END)
+                self._is_empty = False
+                
+            self.chat_text.config(state=tk.NORMAL)
+            
+            # Ensure Nexus header exists
+            if not getattr(self, '_current_nexus_idx', None):
+                self.chat_text.insert(tk.END, "Nexus\n", "nexus_header")
+                self._current_nexus_idx = self.chat_text.index(tk.INSERT)
+                
+            card = ToolActivityCard(self.chat_text, name, status, details)
+            self.chat_text.window_create(tk.END, window=card, padx=10, pady=5)
+            self.chat_text.insert(tk.END, "\n")
+            self.chat_text.see(tk.END)
+            self.chat_text.config(state=tk.DISABLED)
+            
+            self._active_cards[name] = card
+        else:
+            card = self._active_cards.get(name)
+            if card:
+                card.update_status(status, details)
             
     def _append_user_message(self, text: str):
         if getattr(self, '_is_empty', False):

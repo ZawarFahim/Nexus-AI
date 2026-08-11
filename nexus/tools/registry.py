@@ -74,8 +74,20 @@ class ToolRegistry:
 
     def __init__(self, tools: Iterable[Tool] = ()) -> None:
         self._tools: dict[str, Tool] = {}
+        self._listeners: list[Callable[[str, str, Any], None]] = []
         for tool in tools:
             self.add(tool)
+
+    def subscribe(self, listener: Callable[[str, str, Any], None]) -> None:
+        """Subscribe to tool activity (name, status, details)."""
+        self._listeners.append(listener)
+
+    def _notify(self, name: str, status: str, details: Any = None) -> None:
+        for listener in self._listeners:
+            try:
+                listener(name, status, details)
+            except Exception:
+                pass
 
     def add(self, tool: Tool) -> None:
         """Register a tool, replacing any tool of the same name."""
@@ -115,19 +127,23 @@ class ToolRegistry:
             arguments = _parse_arguments(call.arguments)
         except ValueError as exc:
             logger.warning("Bad arguments for %s: %s", call.name, exc)
+            self._notify(call.name, "error", {"error": str(exc)})
             return ToolResult(f"Those arguments were not valid JSON: {exc}")
 
+        self._notify(call.name, "started", arguments)
         started = time.perf_counter()
         try:
             result = tool.run(arguments)
         except Exception as exc:  # noqa: BLE001 -- a broken tool must not end the turn
             logger.exception("Tool %s failed", call.name)
+            self._notify(call.name, "error", {"error": str(exc)})
             return ToolResult(f"That did not work: {exc}")
 
         elapsed = (time.perf_counter() - started) * 1000
         logger.info(
             "Tool %s ran in %.0f ms (%d image(s))", call.name, elapsed, len(result.images)
         )
+        self._notify(call.name, "completed", {"content": result.content})
         return result
 
 
