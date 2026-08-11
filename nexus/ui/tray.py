@@ -54,6 +54,7 @@ class TrayApp:
         on_change_key: Callable[[], None] | None = None,
         add_provider_options: Sequence[tuple[str, str]] = (),
         on_add_provider: Callable[[str], None] | None = None,
+        on_open_ui: Callable[[], None] | None = None,
         announce_on_start: bool = True,
     ) -> None:
         self._components = components
@@ -62,6 +63,7 @@ class TrayApp:
         self._on_change_key = on_change_key
         self._add_provider_options = tuple(add_provider_options)
         self._on_add_provider = on_add_provider
+        self._on_open_ui = on_open_ui
         self._announce_on_start = announce_on_start
 
         self._icon = pystray.Icon(
@@ -75,7 +77,13 @@ class TrayApp:
     # -- menu ---------------------------------------------------------------
 
     def _build_menu(self) -> pystray.Menu:
-        items: list[pystray.MenuItem] = [
+        items: list[pystray.MenuItem] = []
+        
+        if self._on_open_ui is not None:
+            items.append(pystray.MenuItem("Open Interface", self._open_ui))
+            items.append(pystray.Menu.SEPARATOR)
+            
+        items.extend([
             pystray.MenuItem(
                 "Hands-free mode",
                 self._toggle_hands_free,
@@ -84,7 +92,7 @@ class TrayApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._status_text, None, enabled=False),
             pystray.Menu.SEPARATOR,
-        ]
+        ])
 
         if self._on_change_name is not None:
             items.append(pystray.MenuItem("Change my name...", self._change_name))
@@ -131,6 +139,10 @@ class TrayApp:
             self._components.pipeline.abort()
         self._components.hands_free.toggle()
         self._refresh()
+
+    def _open_ui(self, _icon: object = None, _item: object = None) -> None:
+        if self._on_open_ui is not None:
+            self._on_open_ui()
 
     def _change_name(self, _icon: object = None, _item: object = None) -> None:
         self._run_detached(self._on_change_name)
