@@ -7,6 +7,10 @@ from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath
 
 from nexus.ui.pyside.styles import STYLESHEET, COLORS
+from nexus.ui.pyside.bridge import NexusBridge
+from nexus.ui.pyside.widgets.chat import ChatWidget
+from nexus.ui.pyside.widgets.input import InputWidget
+from nexus.core.state import State
 
 class OverlayWindow(QMainWindow):
     """Sleek Frameless window overlay for Nexus."""
@@ -14,6 +18,8 @@ class OverlayWindow(QMainWindow):
     def __init__(self, pipeline=None):
         super().__init__()
         self.pipeline = pipeline
+        self.bridge = NexusBridge(pipeline) if pipeline else None
+        
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(450, 700)
@@ -55,11 +61,49 @@ class OverlayWindow(QMainWindow):
 
         self._build_header()
         
-        # Body placeholder (chat area and input will go here)
-        self.body_widget = QWidget()
-        self.body_layout = QVBoxLayout(self.body_widget)
-        self.body_layout.setContentsMargins(15, 15, 15, 15)
-        self.main_layout.addWidget(self.body_widget, 1)
+        # Chat area
+        self.chat_widget = ChatWidget(self)
+        self.main_layout.addWidget(self.chat_widget, 1)
+        
+        # Input area
+        self.input_widget = InputWidget(self)
+        self.main_layout.addWidget(self.input_widget)
+        
+        if self.bridge:
+            self._connect_bridge()
+            
+        self.chat_widget.show_empty_state(self._on_quick_action)
+
+    def _connect_bridge(self):
+        self.bridge.token_received.connect(self.chat_widget.append_nexus_token)
+        self.bridge.user_text_received.connect(self.chat_widget.add_user_message)
+        self.bridge.state_changed.connect(self.on_state)
+        # We will handle tools later
+        # self.bridge.tool_activity.connect(...)
+        
+        self.input_widget.submitted.connect(self.bridge.submit_text)
+        self.input_widget.escaped.connect(self._on_escape)
+        
+    def _on_quick_action(self, cmd: str):
+        self.input_widget.set_text(cmd)
+
+    def _on_escape(self):
+        if self.pipeline and self.pipeline.state.current in (State.THINKING, State.SPEAKING):
+            self.bridge.abort()
+        else:
+            self.hide_overlay()
+
+    def on_state(self, state: State):
+        names = {
+            State.IDLE: "READY",
+            State.LISTENING: "LISTENING",
+            State.THINKING: "THINKING",
+            State.SPEAKING: "RESPONDING"
+        }
+        status = names.get(state, "READY")
+        color = COLORS["success"] if status == "READY" else COLORS["accent"]
+        self.status_label.setText(f"● {status}")
+        self.status_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 12px; letter-spacing: 1px;")
 
     def _build_header(self):
         self.header = QWidget()
@@ -135,7 +179,7 @@ class OverlayWindow(QMainWindow):
         self.anim.start()
         self.opacity_anim.start()
         
-        # Will call focus on input later
+        self.input_widget.entry.setFocus()
 
     def hide_overlay(self):
         self.hide()
