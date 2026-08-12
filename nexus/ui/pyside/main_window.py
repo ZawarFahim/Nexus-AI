@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QGraphicsDropShadowEffect
@@ -10,6 +11,7 @@ from nexus.ui.pyside.styles import STYLESHEET, COLORS
 from nexus.ui.pyside.bridge import NexusBridge
 from nexus.ui.pyside.widgets.chat import ChatWidget
 from nexus.ui.pyside.widgets.input import InputWidget
+from nexus.ui.pyside.widgets.activity import ToolActivityCard
 from nexus.core.state import State
 
 class OverlayWindow(QMainWindow):
@@ -75,11 +77,10 @@ class OverlayWindow(QMainWindow):
         self.chat_widget.show_empty_state(self._on_quick_action)
 
     def _connect_bridge(self):
-        self.bridge.token_received.connect(self.chat_widget.append_nexus_token)
-        self.bridge.user_text_received.connect(self.chat_widget.add_user_message)
-        self.bridge.state_changed.connect(self.on_state)
-        # We will handle tools later
-        # self.bridge.tool_activity.connect(...)
+        self.bridge.token_received.connect(self.chat_widget.append_nexus_token, Qt.QueuedConnection)
+        self.bridge.user_text_received.connect(self.chat_widget.add_user_message, Qt.QueuedConnection)
+        self.bridge.state_changed.connect(self.on_state, Qt.QueuedConnection)
+        self.bridge.tool_activity.connect(self._on_tool_activity, Qt.QueuedConnection)
         
         self.input_widget.submitted.connect(self.bridge.submit_text)
         self.input_widget.escaped.connect(self._on_escape)
@@ -92,6 +93,9 @@ class OverlayWindow(QMainWindow):
             self.bridge.abort()
         else:
             self.hide_overlay()
+            
+    def _on_tool_activity(self, name: str, status: str, details: Any = None):
+        self.chat_widget.handle_tool_activity(name, status, details)
 
     def on_state(self, state: State):
         names = {

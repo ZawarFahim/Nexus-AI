@@ -1,11 +1,11 @@
 import logging
 from typing import Callable, Sequence
-from PySide6.QtWidgets import QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QSystemTrayIcon, QMenu, QApplication, QStyle
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import QObject
 
 from nexus import app
-from nexus.core import assets
+from nexus.core import paths
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,12 @@ class PySideTray(QObject):
         self.on_add_provider = on_add_provider
         
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon(str(assets.idle_icon_path())))
+        icon_path = paths.bundle_dir() / "assets" / "nexus.ico"
+        if icon_path.exists():
+            self.tray_icon.setIcon(QIcon(str(icon_path)))
+        else:
+            # Fallback if nexus.ico is missing
+            self.tray_icon.setIcon(QApplication.style().standardIcon(QStyle.SP_ComputerIcon))
         self.tray_icon.setToolTip("Nexus")
         
         self.menu = QMenu()
