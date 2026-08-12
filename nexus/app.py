@@ -35,7 +35,7 @@ from nexus.tools.desktop import desktop_tool
 from nexus.tools.files import files_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
-from nexus.ui.desktop.window import DesktopWindow
+from nexus.ui.pyside.main_window import OverlayWindow
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class Components:
     hands_free: HandsFreeMode
     hotkeys: HotkeyListener
     orb: OrbController
-    desktop_window: DesktopWindow
+    desktop_window: OverlayWindow
     state: StateMachine
 
 
@@ -169,8 +169,8 @@ def build(
     hotkeys.register(ALT_SPACE, pipeline.on_press, pipeline.on_release)
     hotkeys.register(CTRL_ALT_SPACE, toggle_hands_free)
     
-    desktop_window = DesktopWindow(pipeline)
-    hotkeys.register(ALT_SHIFT_SPACE, desktop_window.show)
+    desktop_window = OverlayWindow(pipeline)
+    hotkeys.register(ALT_SHIFT_SPACE, desktop_window.show_overlay)
 
     orb = OrbController(enabled=settings.show_orb)
     state.subscribe(orb.on_state)

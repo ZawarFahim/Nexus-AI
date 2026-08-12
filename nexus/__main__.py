@@ -271,7 +271,7 @@ def _run_tray(args: argparse.Namespace, components: app.Components) -> None:
 
     Imported here so that ``--no-tray`` still works if pystray is unavailable.
     """
-    from nexus.ui.tray import TrayApp
+    from nexus.ui.pyside.tray import PySideTray
 
     from nexus.llm import providers
 
@@ -279,15 +279,20 @@ def _run_tray(args: argparse.Namespace, components: app.Components) -> None:
     ready = set(onboarding.configured_providers(settings))
     missing = [(spec.name, spec.label) for spec in providers.ALL if spec.name not in ready]
 
-    tray = TrayApp(
+    tray = PySideTray(
         components,
         on_change_name=lambda: _replace_name(args),
         on_change_key=lambda: _replace_key(args, settings),
         add_provider_options=missing,
         on_add_provider=lambda name: _add_provider(args, settings, name),
-        on_open_ui=components.desktop_window.show,
+        on_open_ui=components.desktop_window.show_overlay,
     )
     tray.run()
+    
+    from PySide6.QtWidgets import QApplication
+    app_instance = QApplication.instance()
+    if app_instance:
+        app_instance.exec()
 
 
 def _add_provider(args: argparse.Namespace, settings, provider_name: str) -> None:

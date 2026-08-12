@@ -65,7 +65,7 @@ a = Analysis(
     runtime_hooks=[],
     # PyAV cannot load under Windows code-integrity policies and Nexus never
     # decodes audio files, so it is stubbed at runtime rather than shipped.
-    excludes=["av", "tkinter.test", "test", "unittest"],
+    excludes=["av", "tkinter", "test", "unittest"],
     noarchive=False,
 )
 
