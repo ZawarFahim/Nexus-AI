@@ -218,6 +218,9 @@ def _start(args: argparse.Namespace, settings, ui: SetupUI) -> int:
     packaged build there is no console, so a printed message is the same as no
     message -- the user double-clicks Nexus and nothing whatsoever happens.
     """
+    from nexus.ui.pyside.app import init_app
+    app_instance = init_app()
+
     if args.set_key:
         onboarding.forget_api_key(settings)
 

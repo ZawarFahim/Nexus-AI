@@ -20,7 +20,7 @@ class OverlayWindow(QMainWindow):
     def __init__(self, pipeline=None):
         super().__init__()
         self.pipeline = pipeline
-        self.bridge = NexusBridge(pipeline) if pipeline else None
+        self.bridge = NexusBridge(pipeline, parent=self) if pipeline else None
         
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)

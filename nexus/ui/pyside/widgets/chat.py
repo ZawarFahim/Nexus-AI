@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QScrollArea, QHBoxLayout, QFrame
+    QWidget, QVBoxLayout, QLabel, QScrollArea, QHBoxLayout, QFrame, QPushButton
 )
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
 from PySide6.QtGui import QFont
 
 from nexus.ui.pyside.styles import COLORS
+from nexus.ui.pyside.widgets.activity import ToolActivityCard
 
 class ChatWidget(QScrollArea):
     """Chat timeline area."""
@@ -23,8 +24,13 @@ class ChatWidget(QScrollArea):
         self.setWidget(self.content_widget)
         
         self.current_nexus_bubble = None
+        self.active_tool_cards = {}
+        self.is_empty = True
 
     def add_user_message(self, text: str):
+        if self.is_empty:
+            self.clear()
+            
         self.current_nexus_bubble = None
         
         container = QWidget()
@@ -76,6 +82,22 @@ class ChatWidget(QScrollArea):
             self.current_nexus_bubble.setText(current_text + fragment)
             
         self._scroll_to_bottom()
+        
+    def handle_tool_activity(self, name: str, status: str, details=None):
+        if self.is_empty:
+            self.clear()
+            
+        if status == "started":
+            # Add new ToolActivityCard
+            card = ToolActivityCard(name, status, details)
+            self.content_layout.insertWidget(self.content_layout.count() - 1, card)
+            self.active_tool_cards[name] = card
+        else:
+            card = self.active_tool_cards.get(name)
+            if card:
+                card.update_status(status, details)
+                
+        self._scroll_to_bottom()
 
     def clear(self):
         # Remove all widgets except stretch
@@ -84,6 +106,8 @@ class ChatWidget(QScrollArea):
             if item.widget():
                 item.widget().deleteLater()
         self.current_nexus_bubble = None
+        self.active_tool_cards.clear()
+        self.is_empty = False
 
     def show_empty_state(self, on_quick_action):
         self.clear()
@@ -112,6 +136,7 @@ class ChatWidget(QScrollArea):
             
         layout.addLayout(actions_layout)
         self.content_layout.insertWidget(0, container)
+        self.is_empty = True
 
     def _scroll_to_bottom(self):
         # Need a tiny delay for layout to update before scrolling
