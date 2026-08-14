@@ -82,4 +82,6 @@ COLORS = {
     "text_secondary": "#94A3B8",
     "success": "#10b981",
     "error": "#ef4444",
+    "info": "#06b6d4",       # cyan
+    "warning": "#f59e0b",    # amber
 }
