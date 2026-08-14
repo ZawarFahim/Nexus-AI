@@ -22,40 +22,51 @@ class AudioVisualizerWidget(QWidget):
         self.targets = [0.0] * self.num_bars
         
         self.is_active = False
+        self.simulated_speech = False
         self.color = QColor(COLORS["accent"])
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_animation)
         self.timer.start(30)  # ~33 FPS
 
-    def set_active(self, active: bool, color_hex: str = None):
+    def set_active(self, active: bool, color_hex: str = None, simulated_speech: bool = False):
         """Turn the visualizer dancing on or off."""
         self.is_active = active
+        self.simulated_speech = simulated_speech
         if color_hex:
             self.color = QColor(color_hex)
             
         if not active:
             # Flatten to 0 smoothly
             self.targets = [0.0] * self.num_bars
+            
+    def pulse(self, intensity: float):
+        """Push the waveform up based on volume."""
+        if not self.is_active: return
+        for i in range(self.num_bars):
+            if random.random() < 0.6:
+                h = random.uniform(2.0, self.height() * 0.9 * intensity)
+                self.targets[i] = max(self.targets[i], h)
 
     def _update_animation(self):
-        # Update targets if active
-        if self.is_active:
-            for i in range(self.num_bars):
-                # Randomly jump to new targets or smoothly change
-                if random.random() < 0.2:
-                    self.targets[i] = random.uniform(2.0, self.height() * 0.8)
-                    
-        # Interpolate current heights towards targets
+        # If simulating speech (LLM talking), pulse automatically
+        if self.is_active and self.simulated_speech:
+            if random.random() < 0.3:
+                self.pulse(random.uniform(0.3, 0.8))
+                
         needs_update = False
         for i in range(self.num_bars):
+            # Falloff / Gravity for targets
+            self.targets[i] *= 0.85
+            
             diff = self.targets[i] - self.heights[i]
             if abs(diff) > 0.1:
-                # Spring physics / easing
-                self.heights[i] += diff * 0.3
+                self.heights[i] += diff * 0.4
                 needs_update = True
             else:
                 self.heights[i] = self.targets[i]
+                if self.heights[i] > 0.1:
+                    needs_update = True
                 
         if needs_update or self.is_active:
             self.update()  # Trigger paintEvent

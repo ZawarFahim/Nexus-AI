@@ -85,6 +85,7 @@ class OverlayWindow(QMainWindow):
         self.bridge.user_text_received.connect(self.chat_widget.add_user_message, Qt.QueuedConnection)
         self.bridge.state_changed.connect(self.on_state, Qt.QueuedConnection)
         self.bridge.tool_activity.connect(self._on_tool_activity, Qt.QueuedConnection)
+        self.bridge.audio_level.connect(self._on_audio_level, Qt.QueuedConnection)
         
         self.input_widget.submitted.connect(self.bridge.submit_text)
         self.input_widget.escaped.connect(self._on_escape)
@@ -101,6 +102,11 @@ class OverlayWindow(QMainWindow):
     def _on_tool_activity(self, name: str, status: str, details: Any = None):
         self.chat_widget.handle_tool_activity(name, status, details)
 
+    def _on_audio_level(self, rms: float):
+        if self.pipeline and self.pipeline.state.current == State.LISTENING:
+            intensity = min(1.0, rms * 15.0)
+            self.chat_widget.visualizer.pulse(intensity)
+
     def on_state(self, state: State):
         names = {
             State.IDLE: "READY",
@@ -116,7 +122,8 @@ class OverlayWindow(QMainWindow):
         # Audio Visualizer
         is_active = state in (State.LISTENING, State.SPEAKING)
         vis_color = COLORS["accent"] if state == State.LISTENING else COLORS["info"]
-        self.chat_widget.visualizer.set_active(is_active, vis_color)
+        is_simulated = (state == State.SPEAKING)
+        self.chat_widget.visualizer.set_active(is_active, vis_color, simulated_speech=is_simulated)
         
         # Pulse Glow Effect
         if state in (State.THINKING, State.SPEAKING, State.LISTENING):

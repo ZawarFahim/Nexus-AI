@@ -18,6 +18,7 @@ class NexusBridge(QObject):
     user_text_received = Signal(str)
     state_changed = Signal(object)
     tool_activity = Signal(str, str, object)  # name, status, details
+    audio_level = Signal(float)
 
     def __init__(self, pipeline: Pipeline, parent=None):
         super().__init__(parent)
@@ -46,8 +47,11 @@ class NexusBridge(QObject):
     def _on_state(self, state: State):
         self.state_changed.emit(state)
 
-    def _on_tool_activity(self, name: str, status: str, details: Any):
+    def _on_tool_activity(self, name: str, status: str, details: Any = None):
         self.tool_activity.emit(name, status, details)
+        
+    def _on_audio(self, rms: float):
+        self.audio_level.emit(rms)
 
     def submit_text(self, text: str):
         """Called from UI to send text to Nexus."""

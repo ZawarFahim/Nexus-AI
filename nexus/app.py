@@ -187,7 +187,9 @@ def build(
         # Root mean square, scaled: speech sits low in a 0-1 range and the orb
         # would barely move if the raw value were used.
         level = float(np.sqrt(np.mean(np.square(block)))) * 6.0
-        orb.on_levels(input_level=min(1.0, level))
+        clamped_level = min(1.0, level)
+        orb.on_levels(input_level=clamped_level)
+        desktop_window.bridge._on_audio(clamped_level)
 
     recorder.subscribe(show_microphone_level)
 
