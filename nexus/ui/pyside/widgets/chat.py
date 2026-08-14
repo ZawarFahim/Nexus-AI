@@ -6,6 +6,7 @@ from PySide6.QtGui import QFont
 
 from nexus.ui.pyside.styles import COLORS
 from nexus.ui.pyside.widgets.activity import ToolActivityCard
+from nexus.ui.pyside.widgets.visualizer import AudioVisualizerWidget
 
 class ChatWidget(QScrollArea):
     """Chat timeline area."""
@@ -26,6 +27,10 @@ class ChatWidget(QScrollArea):
         self.current_nexus_bubble = None
         self.active_tool_cards = {}
         self.is_empty = True
+        
+        # Audio Visualizer pinned at bottom of chat area
+        self.visualizer = AudioVisualizerWidget(self.content_widget)
+        self.content_layout.addWidget(self.visualizer)
 
     def add_user_message(self, text: str):
         if self.is_empty:
@@ -53,8 +58,8 @@ class ChatWidget(QScrollArea):
         """)
         layout.addWidget(bubble)
         
-        # Insert before stretch
-        self.content_layout.insertWidget(self.content_layout.count() - 1, container)
+        # Insert before visualizer
+        self.content_layout.insertWidget(self.content_layout.count() - 2, container)
         self._scroll_to_bottom()
 
     def append_nexus_token(self, fragment: str):
@@ -76,7 +81,7 @@ class ChatWidget(QScrollArea):
                 }}
             """)
             layout.addWidget(self.current_nexus_bubble)
-            self.content_layout.insertWidget(self.content_layout.count() - 1, container)
+            self.content_layout.insertWidget(self.content_layout.count() - 2, container)
         else:
             current_text = self.current_nexus_bubble.text()
             self.current_nexus_bubble.setText(current_text + fragment)
@@ -90,7 +95,7 @@ class ChatWidget(QScrollArea):
         if status == "started":
             # Add new ToolActivityCard
             card = ToolActivityCard(name, status, details)
-            self.content_layout.insertWidget(self.content_layout.count() - 1, card)
+            self.content_layout.insertWidget(self.content_layout.count() - 2, card)
             self.active_tool_cards[name] = card
         else:
             card = self.active_tool_cards.get(name)
@@ -100,8 +105,8 @@ class ChatWidget(QScrollArea):
         self._scroll_to_bottom()
 
     def clear(self):
-        # Remove all widgets except stretch
-        while self.content_layout.count() > 1:
+        # Remove all widgets except stretch and visualizer
+        while self.content_layout.count() > 2:
             item = self.content_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()

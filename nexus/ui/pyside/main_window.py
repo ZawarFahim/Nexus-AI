@@ -4,8 +4,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QGraphicsDropShadowEffect
 )
-from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect, Signal
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath
+from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect, Signal, QSequentialAnimationGroup, QTimer
+from PySide6.QtGui import QColor, QScreen, QPainter, QPainterPath
 
 from nexus.ui.pyside.styles import STYLESHEET, COLORS
 from nexus.ui.pyside.bridge import NexusBridge
@@ -55,11 +55,11 @@ class OverlayWindow(QMainWindow):
         layout.addWidget(self.bg_container)
 
         # Drop shadow for the futuristic float effect
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(30)
-        shadow.setColor(QColor(0, 0, 0, 150))
-        shadow.setOffset(0, 5)
-        self.bg_container.setGraphicsEffect(shadow)
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(30)
+        self.shadow.setColor(QColor(0, 0, 0, 150))
+        self.shadow.setOffset(0, 5)
+        self.bg_container.setGraphicsEffect(self.shadow)
 
         self.main_layout = QVBoxLayout(self.bg_container)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -112,6 +112,30 @@ class OverlayWindow(QMainWindow):
         color = COLORS["success"] if status == "READY" else COLORS["accent"]
         self.status_label.setText(f"● {status}")
         self.status_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 12px; letter-spacing: 1px;")
+        
+        # Audio Visualizer
+        is_active = state in (State.LISTENING, State.SPEAKING)
+        vis_color = COLORS["accent"] if state == State.LISTENING else COLORS["info"]
+        self.chat_widget.visualizer.set_active(is_active, vis_color)
+        
+        # Pulse Glow Effect
+        if state in (State.THINKING, State.SPEAKING, State.LISTENING):
+            if state == State.THINKING:
+                target_glow = QColor(COLORS["warning"])
+            elif state == State.SPEAKING:
+                target_glow = QColor(COLORS["info"])
+            elif state == State.LISTENING:
+                target_glow = QColor(COLORS["accent"])
+            target_glow.setAlpha(120)
+            
+            self.pulse_anim1.setEndValue(target_glow)
+            self.pulse_anim2.setStartValue(target_glow)
+            
+            if self.pulse_group.state() != QPropertyAnimation.Running:
+                self.pulse_group.start()
+        else:
+            self.pulse_group.stop()
+            self.shadow.setColor(QColor(0, 0, 0, 150))
 
     def _build_header(self):
         self.header = QWidget()
@@ -164,6 +188,24 @@ class OverlayWindow(QMainWindow):
         self.anim = QPropertyAnimation(self, b"geometry")
         self.anim.setDuration(250)
         self.anim.setEasingCurve(QEasingCurve.OutExpo)
+        
+        self.pulse_group = QSequentialAnimationGroup(self)
+        
+        self.pulse_anim1 = QPropertyAnimation(self.shadow, b"color")
+        self.pulse_anim1.setDuration(800)
+        self.pulse_anim1.setStartValue(QColor(0, 0, 0, 150))
+        self.pulse_anim1.setEndValue(QColor(10, 150, 255, 100))
+        self.pulse_anim1.setEasingCurve(QEasingCurve.InOutSine)
+        
+        self.pulse_anim2 = QPropertyAnimation(self.shadow, b"color")
+        self.pulse_anim2.setDuration(800)
+        self.pulse_anim2.setStartValue(QColor(10, 150, 255, 100))
+        self.pulse_anim2.setEndValue(QColor(0, 0, 0, 150))
+        self.pulse_anim2.setEasingCurve(QEasingCurve.InOutSine)
+        
+        self.pulse_group.addAnimation(self.pulse_anim1)
+        self.pulse_group.addAnimation(self.pulse_anim2)
+        self.pulse_group.setLoopCount(-1)
 
     def show_overlay(self):
         # Drop down animation from top of screen or just fade in
@@ -176,18 +218,26 @@ class OverlayWindow(QMainWindow):
         self.setWindowOpacity(0.0)
         self.show()
         
-        self.anim.setStartValue(QRect(x, y - 50, w, h))
-        self.anim.setEndValue(QRect(x, y, w, h))
-        
-        self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
-        self.opacity_anim.setDuration(250)
-        self.opacity_anim.setStartValue(0.0)
-        self.opacity_anim.setEndValue(1.0)
-        
-        self.anim.start()
-        self.opacity_anim.start()
-        
-        self.input_widget.entry.setFocus()
+        # Glitch effect!
+        self.glitch_timer = QTimer(self)
+        self.glitch_count = 0
+        def _glitch():
+            self.glitch_count += 1
+            import random
+            if self.glitch_count < 5:
+                self.setWindowOpacity(random.uniform(0.1, 0.7))
+                self.setGeometry(x, y - 50 + random.randint(-15, 15), w, h)
+            else:
+                self.glitch_timer.stop()
+                self.setWindowOpacity(1.0)
+                # Now run the smooth drop
+                self.anim.setStartValue(QRect(x, self.y(), w, h))
+                self.anim.setEndValue(QRect(x, y, w, h))
+                self.anim.start()
+                self.input_widget.entry.setFocus()
+                
+        self.glitch_timer.timeout.connect(_glitch)
+        self.glitch_timer.start(30)
 
     def hide_overlay(self):
         self.hide()
