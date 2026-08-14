@@ -2,7 +2,8 @@ import logging
 from typing import Any
 
 from nexus.core.config import Settings
-from nexus.core.protocols import Tool
+from nexus.core.protocols import ToolResult
+from nexus.tools.registry import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,9 @@ def spotify_tool(settings: Settings) -> Tool | None:
     if not sp:
         return None
         
-    def execute(action: str, query: str = "") -> str:
+    def execute(arguments: dict[str, Any]) -> ToolResult:
+        action = arguments.get("action")
+        query = arguments.get("query", "")
         try:
             if action == "play":
                 if query:
@@ -48,20 +51,20 @@ def spotify_tool(settings: Settings) -> Tool | None:
                         name = tracks[0]['name']
                         artist = tracks[0]['artists'][0]['name']
                         sp.start_playback(uris=[uri])
-                        return f"Playing '{name}' by {artist}."
-                    return f"Could not find any track matching '{query}'."
+                        return ToolResult(f"Playing '{name}' by {artist}.")
+                    return ToolResult(f"Could not find any track matching '{query}'.")
                 else:
                     sp.start_playback()
-                    return "Resumed playback."
+                    return ToolResult("Resumed playback.")
             elif action == "pause":
                 sp.pause_playback()
-                return "Paused playback."
+                return ToolResult("Paused playback.")
             elif action == "next":
                 sp.next_track()
-                return "Skipped to next track."
+                return ToolResult("Skipped to next track.")
             elif action == "previous":
                 sp.previous_track()
-                return "Skipped to previous track."
+                return ToolResult("Skipped to previous track.")
             elif action == "current":
                 current = sp.current_playback()
                 if current and current.get('is_playing'):
@@ -69,15 +72,15 @@ def spotify_tool(settings: Settings) -> Tool | None:
                     if item:
                         name = item['name']
                         artist = item['artists'][0]['name']
-                        return f"Currently playing '{name}' by {artist}."
-                return "Nothing is currently playing."
+                        return ToolResult(f"Currently playing '{name}' by {artist}.")
+                return ToolResult("Nothing is currently playing.")
             else:
-                return f"Unknown action: {action}"
+                return ToolResult(f"Unknown action: {action}")
         except Exception as e:
             logger.error(f"Spotify tool error: {e}")
             if "NO_ACTIVE_DEVICE" in str(e):
-                return "Error: No active Spotify device found. Please open the Spotify app on your computer or phone and start playing something first."
-            return f"Failed to execute Spotify action '{action}': {e}"
+                return ToolResult("Error: No active Spotify device found. Please open the Spotify app on your computer or phone and start playing something first.")
+            return ToolResult(f"Failed to execute Spotify action '{action}': {e}")
 
     return Tool(
         name="control_spotify",
@@ -97,5 +100,5 @@ def spotify_tool(settings: Settings) -> Tool | None:
             },
             "required": ["action"]
         },
-        execute=execute,
+        run=execute,
     )

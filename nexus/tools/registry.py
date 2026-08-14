@@ -157,6 +157,17 @@ def _parse_arguments(raw: str) -> dict[str, Any]:
     if not text:
         return {}
 
+    # Gemini sometimes wraps tool arguments in markdown blocks
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+        
+    if text.endswith("```"):
+        text = text[:-3]
+        
+    text = text.strip()
+
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:

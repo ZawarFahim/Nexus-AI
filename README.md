@@ -11,6 +11,7 @@ Equipped with screen vision and automation tools, Nexus can see what you see and
 ### 🎙️ Voice & Text Interface
 - **Push-to-Talk Voice:** Hold `Alt+Space`, speak your request, and release. Nexus replies audibly with low-latency streaming TTS.
 - **Native Text Commands:** Press `Alt+Shift+Space` to instantly open a floating, native desktop window. Type your commands for a silent, text-only conversation that bypasses speech processing.
+- **Desktop HUD:** Press `Ctrl+Shift+Space` to toggle a permanent, frameless, translucent widget that displays live system stats (CPU, RAM) and Nexus's status.
 - **Hands-Free Mode:** Press `Ctrl+Alt+Space` to toggle an always-listening mode that automatically detects when you stop talking.
 - **Instant Interruptions:** Press the hotkey again at any time to instantly silence a long response.
 
@@ -19,7 +20,8 @@ Nexus can "see" your active screen to answer context-specific questions. Ask *"W
 
 ### ⚙️ Computer, Browser & File Automation
 - **Smart File Assistant:** Nexus can find, open, create, move, and organize your files using natural language. Try saying *"Find my latest PDF"*, *"Create a folder called Research"*, or *"Move these screenshots into Documents"*.
-- **Desktop Control:** Nexus can locate applications, open software, type text, and manipulate windows. Try saying: *"Open Spotify and play Blinding Lights"* or *"Open VS Code"*. High-risk actions will prompt for your explicit approval first.
+- **Desktop Control:** Nexus can locate applications, open software, type text, and manipulate windows. High-risk actions will prompt for your explicit approval first.
+- **Spotify Media Control:** Nexus can directly control your music through the Spotify API. Say *"Nexus, play some Daft Punk"* or *"Skip this track"* and it will execute seamlessly in the background.
 - **Browser Automation:** Say *"Open YouTube"* or *"Search for a recipe"*. Nexus directly commands your existing, authenticated browser sessions rather than launching isolated environments.
 
 ### 🛡️ Privacy & Resilience
@@ -70,6 +72,7 @@ Nexus will launch into your system tray! *(Note: Windows 11 may hide new icons. 
 | **Voice Command** | Hold `Alt+Space` |
 | **Push-to-Talk** | Hold `Alt+Space`, speak, and release |
 | **Text Command** | Press `Alt+Shift+Space` to open the text interface |
+| **Toggle HUD** | Press `Ctrl+Shift+Space` to toggle the desktop Heads Up Display |
 | **Hands-Free Mode** | Press `Ctrl+Alt+Space` to toggle |
 | **Interrupt Nexus** | Press `Alt+Space` while it is speaking |
 | **Settings / Quit** | Right-click the system tray icon |
