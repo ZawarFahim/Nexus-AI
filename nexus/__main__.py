@@ -379,6 +379,7 @@ def _print_ready(components: app.Components, profile) -> None:
     print("  Alt+Space        hold to talk")
     print("  Ctrl+Alt+Space   hands-free mode")
     print("  Alt+Shift+Space  open interface")
+    print("  Ctrl+Shift+Space toggle HUD")
     print("\n  Nexus lives in your system tray. Windows 11 hides new icons, so")
     print("  click the ^ arrow next to the clock if you cannot see it.\n")
 
