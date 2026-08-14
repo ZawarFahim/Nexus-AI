@@ -33,6 +33,7 @@ from nexus.tools.registry import ToolRegistry
 from nexus.tools.screen import screen_tool
 from nexus.tools.desktop import desktop_tool
 from nexus.tools.files import files_tool
+from nexus.tools.spotify import spotify_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
 from nexus.ui.pyside.main_window import OverlayWindow
@@ -82,6 +83,10 @@ def build_tools(settings: Settings) -> ToolRegistry | None:
     # Desktop automation is always added if enabled, but for now we'll just add it.
     registry.add(desktop_tool())
     registry.add(files_tool())
+    
+    sp_tool = spotify_tool(settings)
+    if sp_tool:
+        registry.add(sp_tool)
 
     if not len(registry):
         logger.info("No tools enabled; Nexus can only talk")

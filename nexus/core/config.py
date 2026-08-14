@@ -134,6 +134,9 @@ class Settings:
     vision_model: str = ""
     reasoning: str = ""
     log_level: str = "INFO"
+    spotipy_client_id: str = ""
+    spotipy_client_secret: str = ""
+    spotipy_redirect_uri: str = "http://127.0.0.1:8080/callback"
 
 
 def load_settings(env_file: Path | None = None) -> Settings:
@@ -174,4 +177,7 @@ def load_settings(env_file: Path | None = None) -> Settings:
         vision_model=_get_str("NEXUS_VISION_MODEL"),
         reasoning=_get_str("NEXUS_REASONING"),
         log_level=_get_str("NEXUS_LOG_LEVEL", "INFO").upper(),
+        spotipy_client_id=_get_str("SPOTIPY_CLIENT_ID"),
+        spotipy_client_secret=_get_str("SPOTIPY_CLIENT_SECRET"),
+        spotipy_redirect_uri=_get_str("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8080/callback"),
     )
