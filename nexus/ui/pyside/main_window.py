@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QGraphicsDropShadowEffect
 )
 from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect, Signal, QSequentialAnimationGroup, QTimer
-from PySide6.QtGui import QColor, QScreen, QPainter, QPainterPath
+from PySide6.QtGui import QColor, QFont, QIcon, QScreen, QPainter, QPainterPath
 
 from nexus.ui.pyside.styles import STYLESHEET, COLORS
 from nexus.ui.pyside.bridge import NexusBridge
