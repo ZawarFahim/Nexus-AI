@@ -288,7 +288,7 @@ def _run_tray(args: argparse.Namespace, components: app.Components) -> None:
         on_change_key=lambda: _replace_key(args, settings),
         add_provider_options=missing,
         on_add_provider=lambda name: _add_provider(args, settings, name),
-        on_open_ui=components.desktop_window.show_overlay,
+        on_open_ui=components.desktop_window.show_requested.emit,
     )
     tray.run()
     

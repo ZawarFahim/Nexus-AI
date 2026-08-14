@@ -170,7 +170,7 @@ def build(
     hotkeys.register(CTRL_ALT_SPACE, toggle_hands_free)
     
     desktop_window = OverlayWindow(pipeline)
-    hotkeys.register(ALT_SHIFT_SPACE, desktop_window.show_overlay)
+    hotkeys.register(ALT_SHIFT_SPACE, desktop_window.show_requested.emit)
 
     orb = OrbController(enabled=settings.show_orb)
     state.subscribe(orb.on_state)

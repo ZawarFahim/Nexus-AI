@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QGraphicsDropShadowEffect
 )
-from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect
+from PySide6.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QRect, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath
 
 from nexus.ui.pyside.styles import STYLESHEET, COLORS
@@ -17,10 +17,14 @@ from nexus.core.state import State
 class OverlayWindow(QMainWindow):
     """Sleek Frameless window overlay for Nexus."""
     
+    show_requested = Signal()
+
     def __init__(self, pipeline=None):
         super().__init__()
         self.pipeline = pipeline
         self.bridge = NexusBridge(pipeline, parent=self) if pipeline else None
+        
+        self.show_requested.connect(self.show_overlay, Qt.QueuedConnection)
         
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)

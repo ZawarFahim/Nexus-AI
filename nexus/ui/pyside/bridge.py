@@ -16,7 +16,7 @@ class NexusBridge(QObject):
     # Signals
     token_received = Signal(str)
     user_text_received = Signal(str)
-    state_changed = Signal(State)
+    state_changed = Signal(object)
     tool_activity = Signal(str, str, object)  # name, status, details
 
     def __init__(self, pipeline: Pipeline, parent=None):
