@@ -69,9 +69,10 @@ class WaveformWidget(QWidget):
         mid_y = height / 2.0
         
         # Draw background line
-        pen = QPen(QColor(COLORS['text_secondary']))
+        c = QColor(COLORS['text_secondary'])
+        c.setAlphaF(0.2)
+        pen = QPen(c)
         pen.setWidth(1)
-        pen.setAlphaF(0.2)
         painter.setPen(pen)
         painter.drawLine(0, int(mid_y), width, int(mid_y))
         
