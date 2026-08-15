@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QBrush, QPen
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QGraphicsDropShadowEffect
 
 from nexus.ui.pyside.styles import COLORS
@@ -27,19 +27,19 @@ class GlassPanel(QFrame):
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLORS['bg_main']};
-                border: 1px solid {COLORS['accent']};
+                border: 1px solid rgba(255, 255, 255, 0.05);
                 border-radius: 12px;
             }}
         """)
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(COLORS['accent_glow']))
-        shadow.setOffset(0, 0)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 100))
+        shadow.setOffset(0, 4)
         self.setGraphicsEffect(shadow)
 
 
 class HUDWindow(QWidget):
-    """Tony Stark's Cyberpunk Glassmorphic HUD."""
+    """Sleek, minimalist dashboard."""
     
     toggle_requested = Signal()
     
@@ -57,9 +57,10 @@ class HUDWindow(QWidget):
             Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(300, 400)
+        self.setFixedSize(300, 360)
         
         self.is_visible = False
+        self.last_net = None
         self._setup_ui()
         
         self.timer = QTimer(self)
@@ -68,82 +69,99 @@ class HUDWindow(QWidget):
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(12)
         
         # --- System Panel ---
         self.sys_panel = GlassPanel(self)
         sys_layout = QVBoxLayout(self.sys_panel)
         sys_layout.setContentsMargins(15, 15, 15, 15)
+        sys_layout.setSpacing(8)
         
-        title = QLabel("NEXUS CORE // HUD")
-        title.setFont(QFont("Consolas", 11, QFont.Bold))
-        title.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
+        title = QLabel("SYSTEM METRICS")
+        title.setFont(QFont("Inter", 10, QFont.Bold))
+        title.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
         sys_layout.addWidget(title)
         
-        self.state_label = QLabel("SYSTEM: ONLINE")
-        self.state_label.setFont(QFont("Consolas", 10))
+        self.state_label = QLabel("STATUS: ONLINE")
+        self.state_label.setFont(QFont("Inter", 11, QFont.Bold))
         self.state_label.setStyleSheet(f"color: {COLORS['success']}; background: transparent; border: none;")
         sys_layout.addWidget(self.state_label)
         
-        # Stats layout
+        # CPU/RAM/DISK
         stats_layout = QHBoxLayout()
         self.cpu_label = QLabel("CPU: 0%")
-        self.cpu_label.setFont(QFont("Consolas", 9))
+        self.cpu_label.setFont(QFont("Consolas", 10))
         self.cpu_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
         
         self.ram_label = QLabel("MEM: 0%")
-        self.ram_label.setFont(QFont("Consolas", 9))
+        self.ram_label.setFont(QFont("Consolas", 10))
         self.ram_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
         
         stats_layout.addWidget(self.cpu_label)
         stats_layout.addWidget(self.ram_label)
         sys_layout.addLayout(stats_layout)
+        
+        # NET/DISK
+        net_layout = QHBoxLayout()
+        self.disk_label = QLabel("DSK: 0%")
+        self.disk_label.setFont(QFont("Consolas", 10))
+        self.disk_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
+        
+        self.net_label = QLabel("NET: 0 KB/s")
+        self.net_label.setFont(QFont("Consolas", 10))
+        self.net_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
+        
+        net_layout.addWidget(self.disk_label)
+        net_layout.addWidget(self.net_label)
+        sys_layout.addLayout(net_layout)
+
         main_layout.addWidget(self.sys_panel)
 
         # --- Spotify Panel ---
         self.spotify_panel = GlassPanel(self)
         spotify_layout = QVBoxLayout(self.spotify_panel)
-        spotify_layout.setContentsMargins(15, 10, 15, 10)
+        spotify_layout.setContentsMargins(15, 15, 15, 15)
         
-        sp_title = QLabel("🎵 AUDIO LINK")
-        sp_title.setFont(QFont("Consolas", 9, QFont.Bold))
-        sp_title.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
+        sp_title = QLabel("NOW PLAYING")
+        sp_title.setFont(QFont("Inter", 10, QFont.Bold))
+        sp_title.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
         spotify_layout.addWidget(sp_title)
         
-        self.sp_track_label = QLabel("NO MEDIA DETECTED")
-        self.sp_track_label.setFont(QFont("Consolas", 9))
-        self.sp_track_label.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none;")
+        self.sp_track_label = QLabel("No media playing")
+        self.sp_track_label.setFont(QFont("Inter", 10))
+        self.sp_track_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
         self.sp_track_label.setWordWrap(True)
         spotify_layout.addWidget(self.sp_track_label)
         
         main_layout.addWidget(self.spotify_panel)
-
-        # --- To-Do Panel ---
-        self.todo_panel = GlassPanel(self)
-        todo_layout = QVBoxLayout(self.todo_panel)
-        todo_layout.setContentsMargins(15, 10, 15, 10)
-        
-        todo_title = QLabel("📝 ACTIVE DIRECTIVES")
-        todo_title.setFont(QFont("Consolas", 9, QFont.Bold))
-        todo_title.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
-        todo_layout.addWidget(todo_title)
-        
-        todo_list = QLabel("- [ ] Build UI\\n- [ ] Expand Vision\\n- [ ] Dominate World")
-        todo_list.setFont(QFont("Consolas", 9))
-        todo_list.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
-        todo_layout.addWidget(todo_list)
-        
-        main_layout.addWidget(self.todo_panel)
         main_layout.addStretch()
 
+    def _format_bytes(self, bytes_per_sec):
+        if bytes_per_sec < 1024:
+            return f"{bytes_per_sec:.0f} B/s"
+        elif bytes_per_sec < 1024 * 1024:
+            return f"{bytes_per_sec / 1024:.0f} KB/s"
+        else:
+            return f"{bytes_per_sec / (1024*1024):.1f} MB/s"
+
     def _update_stats(self):
-        # Update CPU/RAM
         try:
+            # Basic stats
             cpu = psutil.cpu_percent(interval=None)
             ram = psutil.virtual_memory().percent
-            
+            disk = psutil.disk_usage('C:\\').percent
             self.cpu_label.setText(f"CPU: {cpu:.1f}%")
             self.ram_label.setText(f"MEM: {ram:.1f}%")
+            self.disk_label.setText(f"DSK: {disk:.1f}%")
+            
+            # Network
+            current_net = psutil.net_io_counters()
+            if self.last_net:
+                dl_bps = (current_net.bytes_recv - self.last_net.bytes_recv) / 2.0
+                ul_bps = (current_net.bytes_sent - self.last_net.bytes_sent) / 2.0
+                self.net_label.setText(f"DL: {self._format_bytes(dl_bps)}")
+            self.last_net = current_net
+            
         except Exception:
             pass
             
@@ -162,23 +180,22 @@ class HUDWindow(QWidget):
                     song = current['item']['name']
                     artist = current['item']['artists'][0]['name']
                     self.sp_track_label.setText(f"{artist} - {song}")
-                    self.sp_track_label.setStyleSheet(f"color: {COLORS['success']}; background: transparent; border: none;")
+                    self.sp_track_label.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
                 else:
-                    self.sp_track_label.setText("PLAYBACK PAUSED")
+                    self.sp_track_label.setText("Playback paused")
                     self.sp_track_label.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none;")
             except Exception as e:
                 logger.debug(f"Spotify HUD Error: {e}")
-                self.sp_track_label.setText("AUDIO LINK FAILED")
 
     def update_state(self, state: State):
         names = {
-            State.IDLE: "SYSTEM: ONLINE",
-            State.LISTENING: "SYSTEM: LISTENING",
-            State.THINKING: "SYSTEM: PROCESSING",
-            State.SPEAKING: "SYSTEM: RESPONDING"
+            State.IDLE: "STATUS: ONLINE",
+            State.LISTENING: "STATUS: LISTENING",
+            State.THINKING: "STATUS: PROCESSING",
+            State.SPEAKING: "STATUS: RESPONDING"
         }
-        status = names.get(state, "SYSTEM: ONLINE")
-        color = COLORS["success"] if status == "SYSTEM: ONLINE" else COLORS["accent"]
+        status = names.get(state, "STATUS: ONLINE")
+        color = COLORS["success"] if status == "STATUS: ONLINE" else COLORS["accent"]
         self.state_label.setText(f"{status}")
         self.state_label.setStyleSheet(f"color: {color}; background: transparent; border: none;")
 
@@ -190,6 +207,7 @@ class HUDWindow(QWidget):
         else:
             self._position_window()
             self.show()
+            self.last_net = psutil.net_io_counters()
             self.timer.start(2000)
             psutil.cpu_percent(interval=None)
             self._update_stats()

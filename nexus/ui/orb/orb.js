@@ -109,9 +109,9 @@ vec4 extractAlpha(vec3 colorIn) {
   return vec4(colorIn.rgb / (a + 1e-5), a);
 }
 
-const vec3 baseColor1 = vec3(0.611765, 0.262745, 0.996078);
-const vec3 baseColor2 = vec3(0.298039, 0.760784, 0.913725);
-const vec3 baseColor3 = vec3(0.062745, 0.078431, 0.600000);
+const baseColor1 = vec3(0.95, 0.98, 1.0);   // Frosted White
+const baseColor2 = vec3(0.50, 0.80, 1.0);   // Ice Blue
+const baseColor3 = vec3(0.15, 0.35, 0.85);  // Deep Azure
 const float innerRadius = 0.6;
 const float noiseScale = 0.65;
 
@@ -190,13 +190,12 @@ void main() {
 }
 `;
 
-// Cyberpunk Hues: Base is purple. 
-// +0 = Purple, +120 = Cyan/Blue, +180 = Green, +250 = Pink/Red
+// Minimalist Hues: Base is Ice Blue
 const STATE_HUE = {
-  idle: 120,       // Cyberpunk Blue/Cyan
-  listening: 150,  // Bright Teal
-  thinking: 260,   // Neon Pink
-  speaking: 0,     // Deep Purple
+  idle: 0,         // Ice Blue
+  listening: 15,   // Slightly cooler
+  thinking: 30,    // Azure
+  speaking: 0,     // Ice Blue
 };
 
 // Idle fades out rather than sitting on top of everything doing nothing.
