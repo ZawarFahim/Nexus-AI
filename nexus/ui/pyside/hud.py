@@ -2,14 +2,16 @@ import psutil
 import logging
 import time
 import ctypes
-from pathlib import Path
+import math
+from datetime import datetime
+from collections import deque
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QFrame, QProgressBar, QGraphicsDropShadowEffect
+    QFrame, QProgressBar, QGraphicsDropShadowEffect, QListWidget
 )
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont
+from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
 from nexus.ui.pyside.styles import COLORS
 from nexus.core.state import State
@@ -37,6 +39,67 @@ def get_active_window_title():
         return "Unknown Context"
 
 
+class WaveformWidget(QWidget):
+    """A custom widget that draws a live audio waveform."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(50)
+        self.level = 0.0
+        self.phase = 0.0
+        
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._animate)
+        self.timer.start(30) # ~30fps
+        
+    def set_level(self, level: float):
+        self.level = level
+
+    def _animate(self):
+        self.phase += 0.2
+        if self.phase > math.pi * 2:
+            self.phase -= math.pi * 2
+        self.update()
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        width = self.width()
+        height = self.height()
+        mid_y = height / 2.0
+        
+        # Draw background line
+        pen = QPen(QColor(COLORS['text_secondary']))
+        pen.setWidth(1)
+        pen.setAlphaF(0.2)
+        painter.setPen(pen)
+        painter.drawLine(0, int(mid_y), width, int(mid_y))
+        
+        # Draw waveform
+        pen = QPen(QColor(COLORS['success'])) # Ice Blue
+        pen.setWidth(2)
+        painter.setPen(pen)
+        
+        amplitude = self.level * (height / 2.0)
+        if amplitude < 2:
+            amplitude = 2 # minimum wave
+            
+        freq = 4.0
+        
+        last_x, last_y = 0, int(mid_y)
+        for x in range(0, width, 2):
+            normalized_x = x / width
+            y_offset = math.sin(self.phase + normalized_x * math.pi * freq) * amplitude
+            
+            # Taper edges
+            taper = math.sin(normalized_x * math.pi)
+            y_offset *= taper
+            
+            y = int(mid_y + y_offset)
+            painter.drawLine(last_x, last_y, x, y)
+            last_x, last_y = x, y
+
+
 class GlassPanel(QFrame):
     """A highly polished glassmorphic translucent panel."""
     def __init__(self, parent=None):
@@ -56,17 +119,20 @@ class GlassPanel(QFrame):
 
 
 class HUDWindow(QWidget):
-    """Ultra-Sleek, minimalist dashboard."""
+    """Ultimate Visual J.A.R.V.I.S. Dashboard."""
     
     toggle_requested = Signal()
     audio_level_updated = Signal(float)
+    event_logged = Signal(str)
     
     def __init__(self, pipeline=None, settings: Settings = None):
         super().__init__()
         self.pipeline = pipeline
         self.settings = settings
+        
         self.toggle_requested.connect(self._on_toggle, Qt.QueuedConnection)
         self.audio_level_updated.connect(self._update_mic_bar, Qt.QueuedConnection)
+        self.event_logged.connect(self._add_event, Qt.QueuedConnection)
         
         # Transparent, frameless, and click-through
         self.setWindowFlags(
@@ -76,7 +142,7 @@ class HUDWindow(QWidget):
             Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(320, 600)
+        self.setFixedSize(360, 750)
         
         self.is_visible = False
         self.last_net = None
@@ -123,20 +189,25 @@ class HUDWindow(QWidget):
         sys_layout.setContentsMargins(20, 20, 20, 20)
         sys_layout.setSpacing(15)
         
-        # Header
-        header_layout = QHBoxLayout()
+        # Massive Clock Header
+        self.clock_label = QLabel("00:00:00")
+        self.clock_label.setFont(QFont("Inter", 28, QFont.Bold))
+        self.clock_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
+        self.clock_label.setAlignment(Qt.AlignCenter)
+        
+        self.date_label = QLabel("MONDAY, JAN 01")
+        self.date_label.setFont(QFont("Inter", 9, QFont.Bold))
+        self.date_label.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 2px;")
+        self.date_label.setAlignment(Qt.AlignCenter)
+        
+        sys_layout.addWidget(self.clock_label)
+        sys_layout.addWidget(self.date_label)
+        
         self.state_label = QLabel("SYSTEM: ONLINE")
-        self.state_label.setFont(QFont("Inter", 9, QFont.Bold))
+        self.state_label.setFont(QFont("Inter", 10, QFont.Bold))
         self.state_label.setStyleSheet(f"color: {COLORS['success']}; background: transparent; border: none; letter-spacing: 1px;")
-        
-        self.uptime_label = QLabel("UP: 00:00")
-        self.uptime_label.setFont(QFont("Consolas", 8))
-        self.uptime_label.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none;")
-        self.uptime_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        
-        header_layout.addWidget(self.state_label)
-        header_layout.addWidget(self.uptime_label)
-        sys_layout.addLayout(header_layout)
+        self.state_label.setAlignment(Qt.AlignCenter)
+        sys_layout.addWidget(self.state_label)
         
         # Active Window Tracker
         win_lbl = QLabel("ACTIVE CONTEXT")
@@ -157,28 +228,23 @@ class HUDWindow(QWidget):
         self.disk_val, self.disk_bar = self._create_metric("STORAGE", stats_layout)
         sys_layout.addLayout(stats_layout)
         
-        # NET/BATT/MIC
+        # NET/BATT
         lower_layout = QHBoxLayout()
         self.net_val, _ = self._create_metric("NETWORK DL", lower_layout)
         self.batt_val, self.batt_bar = self._create_metric("BATTERY", lower_layout)
-        self.mic_val, self.mic_bar = self._create_metric("MICROPHONE", lower_layout)
-        self.mic_val.setText("LIVE")
-        self.mic_bar.setStyleSheet("""
-            QProgressBar::chunk { background-color: #F87171; border-radius: 2px; }
-        """)
         sys_layout.addLayout(lower_layout)
 
         main_layout.addWidget(self.sys_panel)
 
-        # --- Spotify Panel ---
-        self.spotify_panel = GlassPanel(self)
-        spotify_layout = QVBoxLayout(self.spotify_panel)
-        spotify_layout.setContentsMargins(20, 15, 20, 15)
+        # --- Audio & Spotify Panel ---
+        self.audio_panel = GlassPanel(self)
+        audio_layout = QVBoxLayout(self.audio_panel)
+        audio_layout.setContentsMargins(20, 15, 20, 15)
         
         sp_title = QLabel("NOW PLAYING")
         sp_title.setFont(QFont("Inter", 7, QFont.Bold))
         sp_title.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
-        spotify_layout.addWidget(sp_title)
+        audio_layout.addWidget(sp_title)
         
         self.sp_track_label = QLabel("No media playing")
         self.sp_track_label.setFont(QFont("Inter", 12, QFont.Bold))
@@ -189,11 +255,57 @@ class HUDWindow(QWidget):
         self.sp_artist_label.setFont(QFont("Inter", 9))
         self.sp_artist_label.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
         
-        spotify_layout.addWidget(self.sp_track_label)
-        spotify_layout.addWidget(self.sp_artist_label)
+        audio_layout.addWidget(self.sp_track_label)
+        audio_layout.addWidget(self.sp_artist_label)
         
-        main_layout.addWidget(self.spotify_panel)
+        # Waveform
+        mic_lbl = QLabel("AUDIO INPUT")
+        mic_lbl.setFont(QFont("Inter", 7, QFont.Bold))
+        mic_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
+        audio_layout.addWidget(mic_lbl)
+        
+        self.waveform = WaveformWidget()
+        audio_layout.addWidget(self.waveform)
+        
+        main_layout.addWidget(self.audio_panel)
+        
+        # --- Matrix Event Feed ---
+        self.feed_panel = GlassPanel(self)
+        feed_layout = QVBoxLayout(self.feed_panel)
+        feed_layout.setContentsMargins(15, 10, 15, 10)
+        
+        feed_title = QLabel("SYSTEM LOG")
+        feed_title.setFont(QFont("Inter", 7, QFont.Bold))
+        feed_title.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
+        feed_layout.addWidget(feed_title)
+        
+        self.feed_list = QListWidget()
+        self.feed_list.setFont(QFont("Consolas", 8))
+        self.feed_list.setStyleSheet(f"""
+            QListWidget {{
+                background-color: transparent;
+                border: none;
+                color: {COLORS['text_primary']};
+            }}
+            QListWidget::item {{
+                padding: 2px;
+            }}
+        """)
+        self.feed_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.feed_list.setSelectionMode(QListWidget.NoSelection)
+        feed_layout.addWidget(self.feed_list)
+        
+        main_layout.addWidget(self.feed_panel)
         main_layout.addStretch()
+
+    def _add_event(self, event_text: str):
+        if not self.is_visible:
+            return
+        now = datetime.now().strftime("%H:%M:%S")
+        self.feed_list.addItem(f"[{now}] {event_text}")
+        if self.feed_list.count() > 15:
+            self.feed_list.takeItem(0)
+        self.feed_list.scrollToBottom()
 
     def _format_bytes(self, bytes_per_sec):
         if bytes_per_sec < 1024:
@@ -204,21 +316,16 @@ class HUDWindow(QWidget):
             return f"{bytes_per_sec / (1024*1024):.1f} MB"
 
     def _update_mic_bar(self, level: float):
-        # Level comes in 0.0 to 1.0
         if self.is_visible:
-            self.mic_bar.setValue(int(level * 100))
+            self.waveform.set_level(level)
 
     def _update_stats(self):
         try:
-            # Uptime
-            elapsed = int(time.time() - self.start_time)
-            mins, secs = divmod(elapsed, 60)
-            hours, mins = divmod(mins, 60)
-            if hours > 0:
-                self.uptime_label.setText(f"UP: {hours:02d}:{mins:02d}:{secs:02d}")
-            else:
-                self.uptime_label.setText(f"UP: {mins:02d}:{secs:02d}")
-                
+            # Clock & Date
+            now = datetime.now()
+            self.clock_label.setText(now.strftime("%H:%M:%S"))
+            self.date_label.setText(now.strftime("%A, %b %d").upper())
+            
             # Active Window
             title = get_active_window_title()
             if len(title) > 40:
@@ -290,6 +397,9 @@ class HUDWindow(QWidget):
         self.state_label.setText(f"{status}")
         self.state_label.setStyleSheet(f"color: {color}; background: transparent; border: none; letter-spacing: 1px;")
 
+        # Emit an event to the log
+        self.event_logged.emit(f"State transitioned to: {state.name}")
+
     def _on_toggle(self):
         if self.is_visible:
             self.hide()
@@ -299,10 +409,11 @@ class HUDWindow(QWidget):
             self._position_window()
             self.show()
             self.last_net = psutil.net_io_counters()
-            self.timer.start(2000)
+            self.timer.start(1000) # Update 1/sec for clock
             psutil.cpu_percent(interval=None)
             self._update_stats()
             self.is_visible = True
+            self.event_logged.emit("HUD Activated")
 
     def _position_window(self):
         screen = self.screen().availableGeometry()
