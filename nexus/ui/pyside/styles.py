@@ -71,6 +71,19 @@ QPushButton:pressed {
     font-size: 12px;
     letter-spacing: 1px;
 }
+
+QProgressBar {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 2px;
+    text-align: center;
+    color: transparent;
+}
+
+QProgressBar::chunk {
+    background-color: #38BDF8;
+    border-radius: 2px;
+}
 """
 
 COLORS = {

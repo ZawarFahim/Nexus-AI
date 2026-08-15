@@ -201,6 +201,10 @@ def build(
         clamped_level = min(1.0, level)
         orb.on_levels(input_level=clamped_level)
         desktop_window.bridge._on_audio(clamped_level)
+        try:
+            hud_window.audio_level_updated.emit(clamped_level)
+        except Exception:
+            pass
 
     recorder.subscribe(show_microphone_level)
 
