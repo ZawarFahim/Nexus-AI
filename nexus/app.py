@@ -179,7 +179,7 @@ def build(
     desktop_window = OverlayWindow(pipeline)
     hotkeys.register(ALT_SHIFT_SPACE, desktop_window.show_requested.emit)
 
-    hud_window = HUDWindow(pipeline)
+    hud_window = HUDWindow(pipeline=pipeline, settings=settings)
     hotkeys.register(CTRL_SHIFT_SPACE, hud_window.toggle_requested.emit)
 
     orb = OrbController(enabled=settings.show_orb)

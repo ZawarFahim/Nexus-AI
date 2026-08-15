@@ -74,14 +74,14 @@ QPushButton:pressed {
 """
 
 COLORS = {
-    "bg_main": "#0A0A0C",
-    "bg_secondary": "#16161A",
-    "accent": "#3884ff",
-    "accent_glow": "rgba(56, 132, 255, 0.3)",
+    "bg_main": "rgba(10, 15, 30, 200)", # Deep translucent blue-black
+    "bg_secondary": "rgba(16, 25, 45, 180)",
+    "accent": "#00f0ff", # Cyberpunk Neon Cyan
+    "accent_glow": "rgba(0, 240, 255, 0.4)",
     "text_primary": "#FFFFFF",
-    "text_secondary": "#94A3B8",
-    "success": "#10b981",
-    "error": "#ef4444",
-    "info": "#06b6d4",       # cyan
-    "warning": "#f59e0b",    # amber
+    "text_secondary": "#A0B5D8",
+    "success": "#39ff14", # Neon green
+    "error": "#ff003c", # Cyberpunk red
+    "info": "#d000ff", # Neon pink/purple
+    "warning": "#ffea00", # Neon yellow
 }

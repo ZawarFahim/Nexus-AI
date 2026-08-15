@@ -172,8 +172,13 @@ vec4 mainImage(vec2 fragCoord) {
   float c = cos(angle);
   uv = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
 
-  uv.x += hover * hoverIntensity * 0.1 * sin(uv.y * 10.0 + iTime);
-  uv.y += hover * hoverIntensity * 0.1 * sin(uv.x * 10.0 + iTime);
+  // Audio Visualizer effect: intense wobble when hover (energy) is high
+  float energyWobble = 1.0 + (hover * hoverIntensity * 15.0);
+  uv.x += hover * hoverIntensity * 0.15 * sin(uv.y * 10.0 * energyWobble + iTime * energyWobble);
+  uv.y += hover * hoverIntensity * 0.15 * sin(uv.x * 10.0 * energyWobble + iTime * energyWobble);
+
+  // High-frequency ripple
+  uv += hover * hoverIntensity * 0.05 * vec2(sin(iTime * 20.0), cos(iTime * 20.0));
 
   return draw(uv);
 }
@@ -185,14 +190,13 @@ void main() {
 }
 `;
 
-// Hue rotation per state, in degrees, applied to the shader's purple base.
-// Chosen to agree with the tray icon: a user glancing at either should not
-// get two different answers about what Bruno is doing.
+// Cyberpunk Hues: Base is purple. 
+// +0 = Purple, +120 = Cyan/Blue, +180 = Green, +250 = Pink/Red
 const STATE_HUE = {
-  idle: 0,
-  listening: 30,
-  thinking: 170,
-  speaking: 250,
+  idle: 120,       // Cyberpunk Blue/Cyan
+  listening: 150,  // Bright Teal
+  thinking: 260,   // Neon Pink
+  speaking: 0,     // Deep Purple
 };
 
 // Idle fades out rather than sitting on top of everything doing nothing.
@@ -208,9 +212,9 @@ const STATE_OPACITY = {
 const EASE = 0.12;
 const OPACITY_EASE = 0.08;
 
-const BASE_ROTATION = 0.3;
-const MAX_ROTATION = 2.4;
-const MAX_HOVER_INTENSITY = 0.8;
+const BASE_ROTATION = 0.5;
+const MAX_ROTATION = 4.0; // Faster spin
+const MAX_HOVER_INTENSITY = 1.5; // Bigger ripples
 
 
 function compile(gl, type, source) {
