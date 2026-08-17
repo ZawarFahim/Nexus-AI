@@ -22,7 +22,6 @@ from dataclasses import dataclass, field
 from typing import Any, Final
 
 from nexus.core.protocols import ToolCall, ToolResult
-from nexus.core.settings import Settings
 
 logger = logging.getLogger(__name__)
 
