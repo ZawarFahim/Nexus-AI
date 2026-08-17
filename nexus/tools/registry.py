@@ -22,12 +22,25 @@ from dataclasses import dataclass, field
 from typing import Any, Final
 
 from nexus.core.protocols import ToolCall, ToolResult
+from nexus.tools.automation import control_browser_tool, control_desktop_tool
+from nexus.tools.notify import notify_tool
+from nexus.tools.spotify import spotify_tool
+from nexus.core.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 # A tool that takes longer than this has failed as far as the user is
 # concerned: they asked a question out loud and are waiting for an answer.
 DEFAULT_TIMEOUT_SECONDS: Final = 10.0
+
+
+def register_all_tools(settings: Settings) -> list[Tool]:
+    return [
+        control_browser_tool(settings),
+        control_desktop_tool(),
+        spotify_tool(),
+        notify_tool(),
+    ]
 
 
 @dataclass(frozen=True, slots=True)
