@@ -31,6 +31,7 @@ from nexus.core import profile as profile_store
 from nexus.core.config import load_settings
 from nexus.core.protocols import LLMError
 from nexus.core.single_instance import SingleInstance
+from nexus.tools.notify import send_windows_notification
 from nexus.ui.setup import ConsoleSetup, SetupUI
 
 logger = logging.getLogger(__name__)
@@ -380,8 +381,11 @@ def _print_ready(components: app.Components, profile) -> None:
     print("  Ctrl+Alt+Space   hands-free mode")
     print("  Alt+Shift+Space  open interface")
     print("  Ctrl+Shift+Space toggle HUD")
-    print("\n  Nexus lives in your system tray. Windows 11 hides new icons, so")
-    print("  click the ^ arrow next to the clock if you cannot see it.\n")
+    print(
+        "  Nexus lives in your system tray. Windows 11 hides new icons, so\n"
+        "  click the ^ arrow next to the clock if you cannot see it.\n"
+    )
+    send_windows_notification("Nexus Online", "System is fully initialized and ready.")
 
 
 if __name__ == "__main__":
