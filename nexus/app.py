@@ -34,6 +34,8 @@ from nexus.tools.screen import screen_tool
 from nexus.tools.desktop import desktop_tool
 from nexus.tools.files import files_tool
 from nexus.tools.spotify import spotify_tool
+from nexus.tools.notify import notify_tool, send_windows_notification
+from nexus.tools.search import web_search_tool
 from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
 from nexus.ui.pyside.main_window import OverlayWindow
@@ -83,6 +85,8 @@ def build_tools(settings: Settings) -> ToolRegistry | None:
     # Desktop automation is always added if enabled, but for now we'll just add it.
     registry.add(desktop_tool())
     registry.add(files_tool())
+    registry.add(notify_tool())
+    registry.add(web_search_tool())
     
     sp_tool = spotify_tool(settings)
     if sp_tool:
