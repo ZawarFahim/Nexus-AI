@@ -25,6 +25,7 @@ from nexus.core.protocols import ToolCall, ToolResult
 from nexus.tools.automation import control_browser_tool, control_desktop_tool
 from nexus.tools.notify import notify_tool
 from nexus.tools.spotify import spotify_tool
+from nexus.tools.search import web_search_tool
 from nexus.core.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ def register_all_tools(settings: Settings) -> list[Tool]:
         control_desktop_tool(),
         spotify_tool(),
         notify_tool(),
+        web_search_tool(),
     ]
 
 
