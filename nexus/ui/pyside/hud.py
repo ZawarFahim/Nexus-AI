@@ -378,8 +378,14 @@ class HUDWindow(QWidget):
                 if current and current.get('is_playing'):
                     song = current['item']['name']
                     artist = current['item']['artists'][0]['name']
+                    # Retrieve the album art URL (highest resolution)
+                    album_art_url = None
+                    if current['item']['album']['images']:
+                        album_art_url = current['item']['album']['images'][0]['url']
+                    
                     self.sp_track_label.setText(song)
                     self.sp_artist_label.setText(artist)
+                    # We will process album_art_url in the next commits
                 else:
                     self.sp_track_label.setText("Playback paused")
                     self.sp_artist_label.setText("--")
