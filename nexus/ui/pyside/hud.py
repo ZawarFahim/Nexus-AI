@@ -5,6 +5,14 @@ import ctypes
 import math
 from datetime import datetime
 from collections import deque
+import urllib.request
+import io
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -169,6 +177,7 @@ class HUDWindow(QWidget):
         
         self.is_visible = False
         self.last_net = None
+        self.last_album_url = None
         self.start_time = time.time()
         self._setup_ui()
         
@@ -354,6 +363,17 @@ class HUDWindow(QWidget):
         if self.is_visible:
             self.waveform.set_level(level)
 
+    def _get_dominant_color(self, img_bytes):
+        if not PIL_AVAILABLE:
+            return None
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            img = img.resize((1, 1))
+            color = img.getpixel((0, 0))
+            return QColor(color[0], color[1], color[2])
+        except Exception:
+            return None
+
     def _update_stats(self):
         try:
             # Clock & Date
@@ -419,7 +439,30 @@ class HUDWindow(QWidget):
                     
                     self.sp_track_label.setText(song)
                     self.sp_artist_label.setText(artist)
-                    # We will process album_art_url in the next commits
+                    
+                    if album_art_url and album_art_url != self.last_album_url:
+                        self.last_album_url = album_art_url
+                        try:
+                            req = urllib.request.Request(album_art_url, headers={'User-Agent': 'Mozilla/5.0'})
+                            with urllib.request.urlopen(req, timeout=2) as response:
+                                img_bytes = response.read()
+                                pixmap = QPixmap()
+                                pixmap.loadFromData(img_bytes)
+                                self.sp_art_widget.set_pixmap(pixmap)
+                                
+                                dom_color = self._get_dominant_color(img_bytes)
+                                if dom_color:
+                                    bg = f"rgba({dom_color.red()}, {dom_color.green()}, {dom_color.blue()}, 0.15)"
+                                    self.audio_panel.setStyleSheet(f"""
+                                        QFrame {{
+                                            background-color: {bg};
+                                            border: 1px solid rgba(255, 255, 255, 0.08);
+                                            border-radius: 16px;
+                                        }}
+                                    """)
+                        except Exception as e:
+                            logger.error(f"Failed to load album art: {e}")
+                            
                 else:
                     self.sp_track_label.setText("Playback paused")
                     self.sp_artist_label.setText("--")
