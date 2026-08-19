@@ -324,6 +324,10 @@ class HUDWindow(QWidget):
         text_layout.addLayout(btn_layout)
         text_layout.addStretch()
         
+        self.btn_play.clicked.connect(self._toggle_play)
+        self.btn_next.clicked.connect(self._next_song)
+        self.btn_prev.clicked.connect(self._prev_song)
+        
         track_layout.addLayout(text_layout)
         audio_layout.addLayout(track_layout)
         
@@ -464,7 +468,11 @@ class HUDWindow(QWidget):
                     
                     self.sp_track_label.setText(song)
                     self.sp_artist_label.setText(artist)
-                    
+                    if current.get('is_playing'):
+                        self.btn_play.setText("⏸")
+                    else:
+                        self.btn_play.setText("⏯")
+                        
                     if album_art_url and album_art_url != self.last_album_url:
                         self.last_album_url = album_art_url
                         try:
@@ -529,3 +537,44 @@ class HUDWindow(QWidget):
         x = screen.width() - self.width() - 30
         y = screen.height() - self.height() - 30
         self.move(x, y)
+
+    def _get_sp(self):
+        if SPOTIPY_AVAILABLE and self.settings and self.settings.spotipy_client_id:
+            return spotipy.Spotify(auth_manager=SpotifyOAuth(
+                client_id=self.settings.spotipy_client_id,
+                client_secret=self.settings.spotipy_client_secret,
+                redirect_uri=self.settings.spotipy_redirect_uri,
+                scope="user-modify-playback-state user-read-playback-state",
+                open_browser=False
+            ))
+        return None
+
+    def _toggle_play(self):
+        sp = self._get_sp()
+        if not sp: return
+        try:
+            current = sp.current_playback()
+            if current and current.get('is_playing'):
+                sp.pause_playback()
+                self.btn_play.setText("⏯")
+            else:
+                sp.start_playback()
+                self.btn_play.setText("⏸")
+        except Exception as e:
+            logger.debug(f"Play/Pause failed: {e}")
+
+    def _next_song(self):
+        sp = self._get_sp()
+        if sp:
+            try:
+                sp.next_track()
+            except Exception as e:
+                logger.debug(f"Next track failed: {e}")
+
+    def _prev_song(self):
+        sp = self._get_sp()
+        if sp:
+            try:
+                sp.previous_track()
+            except Exception as e:
+                logger.debug(f"Prev track failed: {e}")
