@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QFrame, QProgressBar, QGraphicsDropShadowEffect, QListWidget
 )
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPainterPath, QPixmap
 
 from nexus.ui.pyside.styles import COLORS
 from nexus.core.state import State
@@ -99,6 +99,28 @@ class WaveformWidget(QWidget):
             y = int(mid_y + y_offset)
             painter.drawLine(last_x, last_y, x, y)
             last_x, last_y = x, y
+
+
+class RoundedImageWidget(QWidget):
+    """Draws a QPixmap with smooth rounded corners."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(64, 64)
+        self.pixmap = None
+        
+    def set_pixmap(self, pixmap):
+        self.pixmap = pixmap
+        self.update()
+        
+    def paintEvent(self, event):
+        if not self.pixmap:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, self.width(), self.height(), 8, 8)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
 
 
 class GlassPanel(QFrame):
@@ -247,6 +269,14 @@ class HUDWindow(QWidget):
         sp_title.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent; border: none; letter-spacing: 1px;")
         audio_layout.addWidget(sp_title)
         
+        # Horizontal layout for Album Art + Text
+        track_layout = QHBoxLayout()
+        track_layout.setSpacing(15)
+        
+        self.sp_art_widget = RoundedImageWidget()
+        track_layout.addWidget(self.sp_art_widget)
+        
+        text_layout = QVBoxLayout()
         self.sp_track_label = QLabel("No media playing")
         self.sp_track_label.setFont(QFont("Inter", 12, QFont.Bold))
         self.sp_track_label.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent; border: none;")
@@ -256,8 +286,12 @@ class HUDWindow(QWidget):
         self.sp_artist_label.setFont(QFont("Inter", 9))
         self.sp_artist_label.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
         
-        audio_layout.addWidget(self.sp_track_label)
-        audio_layout.addWidget(self.sp_artist_label)
+        text_layout.addWidget(self.sp_track_label)
+        text_layout.addWidget(self.sp_artist_label)
+        text_layout.addStretch()
+        
+        track_layout.addLayout(text_layout)
+        audio_layout.addLayout(track_layout)
         
         # Waveform
         mic_lbl = QLabel("AUDIO INPUT")
