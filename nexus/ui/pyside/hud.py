@@ -16,7 +16,8 @@ except ImportError:
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QFrame, QProgressBar, QGraphicsDropShadowEffect, QListWidget
+    QFrame, QProgressBar, QGraphicsDropShadowEffect, QListWidget,
+    QPushButton
 )
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPainterPath, QPixmap
@@ -169,8 +170,7 @@ class HUDWindow(QWidget):
         self.setWindowFlags(
             Qt.FramelessWindowHint | 
             Qt.WindowStaysOnTopHint | 
-            Qt.Tool | 
-            Qt.WindowTransparentForInput
+            Qt.Tool
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setFixedSize(360, 750)
@@ -295,8 +295,33 @@ class HUDWindow(QWidget):
         self.sp_artist_label.setFont(QFont("Inter", 9))
         self.sp_artist_label.setStyleSheet(f"color: {COLORS['accent']}; background: transparent; border: none;")
         
+        # Media Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
+        
+        self.btn_prev = QPushButton("⏮")
+        self.btn_play = QPushButton("⏯")
+        self.btn_next = QPushButton("⏭")
+        
+        for btn in (self.btn_prev, self.btn_play, self.btn_next):
+            btn.setFixedSize(24, 24)
+            btn.setFont(QFont("Inter", 10))
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: transparent;
+                    color: {COLORS['text_primary']};
+                    border: none;
+                }}
+                QPushButton:hover {{
+                    color: {COLORS['accent']};
+                }}
+            """)
+            btn_layout.addWidget(btn)
+        btn_layout.addStretch()
+        
         text_layout.addWidget(self.sp_track_label)
         text_layout.addWidget(self.sp_artist_label)
+        text_layout.addLayout(btn_layout)
         text_layout.addStretch()
         
         track_layout.addLayout(text_layout)
