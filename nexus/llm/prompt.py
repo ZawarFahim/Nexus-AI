@@ -108,6 +108,9 @@ _DESKTOP_TOOL: Final = """\
 _FILES_TOOL: Final = """\
 - You can search, read, open, and organize their local files and folders. If a file path is ambiguous, use search first to find it."""
 
+_BRIEFING_TOOL: Final = """\
+- You can run the morning briefing protocol. When you do, deliver the gathered date, system health, weather, and news in a highly charismatic, polished, confident tone like a high-end AI assistant."""
+
 _LIMITS_WITH_TOOLS: Final = """\
 - Never narrate your tool usage. Just perform the action and answer naturally."""
 
@@ -156,6 +159,7 @@ def build_system_prompt(
         sections.append(_DESKTOP_TOOL)
     if can_use_files:
         sections.append(_FILES_TOOL)
+    sections.append(_BRIEFING_TOOL)
 
     capabilities = "\n".join([*sections, _LIMITS_WITH_TOOLS]) if sections else _NO_TOOLS
 
