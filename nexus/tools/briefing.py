@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 import psutil
+import urllib.request
+import psutil
 
 from nexus.tools.registry import Tool
 
@@ -22,7 +24,15 @@ def morning_briefing_tool() -> Tool:
             logger.error(f"Failed to get system health: {e}")
             sys_health = "System health check failed."
             
-        briefing = f"Current Date & Time: {now}\nSystem Health: {sys_health}\n"
+        try:
+            weather = "Could not fetch weather."
+            req = urllib.request.Request("https://wttr.in/?format=3", headers={'User-Agent': 'curl/7.68.0'})
+            with urllib.request.urlopen(req, timeout=3) as response:
+                weather = response.read().decode('utf-8').strip()
+        except Exception as e:
+            logger.error(f"Failed to get weather: {e}")
+
+        briefing = f"Current Date & Time: {now}\nSystem Health: {sys_health}\nWeather: {weather}\n"
         briefing += "Please summarize this information into a friendly, spoken morning briefing for the user."
         
         return briefing
