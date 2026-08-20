@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 import psutil
 import urllib.request
-import psutil
+import xml.etree.ElementTree as ET
 
 from nexus.tools.registry import Tool
 
@@ -32,8 +32,21 @@ def morning_briefing_tool() -> Tool:
         except Exception as e:
             logger.error(f"Failed to get weather: {e}")
 
-        briefing = f"Current Date & Time: {now}\nSystem Health: {sys_health}\nWeather: {weather}\n"
-        briefing += "Please summarize this information into a friendly, spoken morning briefing for the user."
+        try:
+            headlines = []
+            req = urllib.request.Request("http://feeds.bbci.co.uk/news/rss.xml", headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=3) as response:
+                xml_data = response.read()
+                root = ET.fromstring(xml_data)
+                for item in root.findall('./channel/item')[:3]:
+                    headlines.append(item.find('title').text)
+            news = "\\n- ".join(headlines)
+        except Exception as e:
+            logger.error(f"Failed to get news: {e}")
+            news = "Could not fetch top news."
+
+        briefing = f"Current Date & Time: {now}\\nSystem Health: {sys_health}\\nWeather: {weather}\\nTop News:\\n- {news}\\n"
+        briefing += "Please summarize this information into a friendly, spoken morning briefing for the user. Do not read the URLs, just the headlines."
         
         return briefing
 
