@@ -4,6 +4,7 @@ import psutil
 import urllib.request
 import xml.etree.ElementTree as ET
 
+from nexus.core.protocols import ToolResult
 from nexus.tools.registry import Tool
 
 logger = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 def morning_briefing_tool() -> Tool:
     """Provides a morning briefing tool."""
     
-    def handler() -> str:
+    def run(args: dict) -> ToolResult:
         logger.info("Executing Morning Briefing...")
         now = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
         
@@ -48,11 +49,11 @@ def morning_briefing_tool() -> Tool:
         briefing = f"Current Date & Time: {now}\\nSystem Health: {sys_health}\\nWeather: {weather}\\nTop News:\\n- {news}\\n"
         briefing += "Please summarize this information into a friendly, spoken morning briefing for the user. Do not read the URLs, just the headlines."
         
-        return briefing
+        return ToolResult(briefing)
 
     return Tool(
         name="morning_briefing",
         description="Generates a comprehensive morning briefing including date, time, and system health.",
         parameters={},
-        handler=handler
+        run=run
     )
