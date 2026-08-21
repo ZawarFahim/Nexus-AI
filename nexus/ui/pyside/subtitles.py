@@ -68,7 +68,11 @@ class SubtitleWindow(QWidget):
             self._current_speaker = speaker
             
         self._current_text += text
-        formatted = f"{speaker}: {self._current_text}"
+        
+        # Dual-color styling using HTML
+        speaker_color = "#3498db" if speaker == "User" else "#ffffff"
+        formatted = f'<span style="color: {speaker_color}; font-weight: bold;">{speaker}:</span> <span style="color: white;">{self._current_text}</span>'
+        
         self.label.setText(formatted)
         self.adjustSize()
         self._position_window()
