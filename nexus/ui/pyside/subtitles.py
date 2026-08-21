@@ -70,6 +70,8 @@ class SubtitleWindow(QWidget):
         self._current_text += text
         formatted = f"{speaker}: {self._current_text}"
         self.label.setText(formatted)
+        self.adjustSize()
+        self._position_window()
         self.show()
         
     def _on_user_text(self, text: str):
