@@ -29,6 +29,10 @@ class SubtitleWindow(QWidget):
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         
+        self.fade_timer = QTimer(self)
+        self.fade_timer.setSingleShot(True)
+        self.fade_timer.timeout.connect(self.hide)
+        
         # We will resize dynamically, but start wide
         self.setFixedWidth(800)
         
@@ -77,6 +81,9 @@ class SubtitleWindow(QWidget):
         self.adjustSize()
         self._position_window()
         self.show()
+        
+        # Reset fade timer
+        self.fade_timer.start(5000)
         
     def _on_user_text(self, text: str):
         # User text comes all at once, so we reset before showing
