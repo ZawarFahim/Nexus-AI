@@ -41,6 +41,7 @@ from nexus.tts.piper import PiperVoice
 from nexus.ui.orb import OrbController
 from nexus.ui.pyside.main_window import OverlayWindow
 from nexus.ui.pyside.hud import HUDWindow
+from nexus.ui.pyside.subtitles import SubtitleWindow
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ class Components:
     orb: OrbController
     desktop_window: OverlayWindow
     hud_window: HUDWindow
+    subtitle_window: SubtitleWindow
     state: StateMachine
 
 
@@ -187,6 +189,8 @@ def build(
 
     hud_window = HUDWindow(pipeline=pipeline, settings=settings)
     hotkeys.register(CTRL_SHIFT_SPACE, hud_window.toggle_requested.emit)
+    
+    subtitle_window = SubtitleWindow(pipeline=pipeline)
 
     orb = OrbController(enabled=settings.show_orb)
     state.subscribe(orb.on_state)
@@ -229,6 +233,7 @@ def build(
         orb=orb,
         desktop_window=desktop_window,
         hud_window=hud_window,
+        subtitle_window=subtitle_window,
         state=state,
     )
 
