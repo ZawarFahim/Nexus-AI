@@ -12,6 +12,8 @@ class SubtitleWindow(QWidget):
     
     def __init__(self, pipeline=None):
         super().__init__()
+        self._current_speaker = ""
+        self._current_text = ""
         self.pipeline = pipeline
         self.show_text_requested.connect(self._on_show_text, Qt.QueuedConnection)
         
@@ -61,10 +63,18 @@ class SubtitleWindow(QWidget):
         self.move(x, y)
         
     def _on_show_text(self, speaker: str, text: str):
-        self.label.setText(text)
+        if speaker != self._current_speaker:
+            self._current_text = ""
+            self._current_speaker = speaker
+            
+        self._current_text += text
+        formatted = f"{speaker}: {self._current_text}"
+        self.label.setText(formatted)
         self.show()
         
     def _on_user_text(self, text: str):
+        # User text comes all at once, so we reset before showing
+        self._current_speaker = "" 
         self.show_text_requested.emit("User", text)
         
     def _on_assistant_token(self, text: str):
