@@ -1,0 +1,61 @@
+import logging
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QFont
+
+logger = logging.getLogger(__name__)
+
+class SubtitleWindow(QWidget):
+    """Cinematic floating subtitles for Nexus and User."""
+    
+    show_text_requested = Signal(str, str)
+    
+    def __init__(self, pipeline=None):
+        super().__init__()
+        self.pipeline = pipeline
+        self.show_text_requested.connect(self._on_show_text, Qt.QueuedConnection)
+        
+        self.setWindowFlags(
+            Qt.FramelessWindowHint | 
+            Qt.WindowStaysOnTopHint | 
+            Qt.Tool | 
+            Qt.WindowTransparentForInput
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # We will resize dynamically, but start wide
+        self.setFixedWidth(800)
+        
+        self._setup_ui()
+        self._position_window()
+        self.show()
+        
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.label = QLabel("")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setFont(QFont("Inter", 24, QFont.Bold))
+        self.label.setStyleSheet("color: white; background: transparent;")
+        self.label.setWordWrap(True)
+        
+        # Basic shadow
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(8)
+        shadow.setColor(QColor(0, 0, 0, 200))
+        shadow.setOffset(0, 2)
+        self.label.setGraphicsEffect(shadow)
+        
+        layout.addWidget(self.label)
+        
+    def _position_window(self):
+        screen = self.screen().availableGeometry()
+        x = (screen.width() - self.width()) // 2
+        y = screen.height() - 150
+        self.move(x, y)
+        
+    def _on_show_text(self, speaker: str, text: str):
+        self.label.setText(text)
+        self.show()
