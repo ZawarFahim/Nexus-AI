@@ -15,6 +15,10 @@ class SubtitleWindow(QWidget):
         self.pipeline = pipeline
         self.show_text_requested.connect(self._on_show_text, Qt.QueuedConnection)
         
+        if self.pipeline:
+            self.pipeline.subscribe_user_text(self._on_user_text)
+            self.pipeline.subscribe_token(self._on_assistant_token)
+            
         self.setWindowFlags(
             Qt.FramelessWindowHint | 
             Qt.WindowStaysOnTopHint | 
@@ -59,3 +63,9 @@ class SubtitleWindow(QWidget):
     def _on_show_text(self, speaker: str, text: str):
         self.label.setText(text)
         self.show()
+        
+    def _on_user_text(self, text: str):
+        self.show_text_requested.emit("User", text)
+        
+    def _on_assistant_token(self, text: str):
+        self.show_text_requested.emit("Nexus", text)
